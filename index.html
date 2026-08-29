@@ -1,12 +1,214 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Yun SangWon</title>
+
+  <meta
+    name="description"
+    content="Personal website of Yun SangWon, an Electrical and Electronic Engineering student interested in wireless communications, semiconductors, and computing."
+  />
+
+  <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
-  <h1>Yun SangWon</h1>
-  <p>Welcome to my website.</p>
+
+  <header class="navbar">
+    <div class="container nav-container">
+      <a href="/" class="logo">Yun SangWon</a>
+
+      <nav>
+        <a href="#projects">Projects</a>
+        <a href="#about">About</a>
+        <a href="https://github.com/sang1yun" target="_blank">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+
+  <main>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="container hero-content">
+
+        <p class="eyebrow">
+          Electrical & Electronic Engineering
+        </p>
+
+        <h1>
+          Hi, I'm<br />
+          <span>Yun SangWon.</span>
+        </h1>
+
+        <p class="hero-description">
+          I am interested in wireless communications,
+          semiconductors, and computing.
+          I enjoy understanding engineering systems
+          through simulation, modeling, and experimentation.
+        </p>
+
+        <div class="hero-buttons">
+          <a href="#projects" class="button primary">
+            View Projects
+          </a>
+
+          <a
+            href="https://github.com/sang1yun"
+            target="_blank"
+            class="button secondary"
+          >
+            GitHub
+          </a>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- PROJECTS -->
+    <section id="projects" class="section">
+      <div class="container">
+
+        <p class="section-label">PROJECTS</p>
+
+        <h2>Selected Work</h2>
+
+        <div class="project-grid">
+
+          <article class="project-card featured">
+
+            <div class="project-number">
+              01
+            </div>
+
+            <div class="project-content">
+
+              <p class="project-type">
+                2026 Capstone Design
+              </p>
+
+              <h3>
+                Site-Specific Wireless Channel Modeling
+                & Probabilistic Shaping
+              </h3>
+
+              <p>
+                A wireless communication simulation project combining
+                3D ray tracing, interference-channel modeling,
+                and probabilistic shaping for 16-QAM.
+              </p>
+
+              <div class="tags">
+                <span>Python</span>
+                <span>Sionna RT</span>
+                <span>TensorFlow</span>
+                <span>Blender</span>
+                <span>16-QAM</span>
+              </div>
+
+              <a
+                href="projects/capstone.html"
+                class="project-link"
+              >
+                View Project →
+              </a>
+
+            </div>
+
+          </article>
+
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- INTERESTS -->
+    <section class="section muted-section">
+      <div class="container">
+
+        <p class="section-label">INTERESTS</p>
+
+        <h2>What I'm studying</h2>
+
+        <div class="interest-grid">
+
+          <div class="interest-card">
+            <h3>Wireless Communications</h3>
+            <p>
+              Channel modeling, signal processing,
+              information theory, and communication systems.
+            </p>
+          </div>
+
+          <div class="interest-card">
+            <h3>Semiconductors</h3>
+            <p>
+              Semiconductor devices, device physics,
+              fabrication, and emerging technologies.
+            </p>
+          </div>
+
+          <div class="interest-card">
+            <h3>Computing</h3>
+            <p>
+              Programming, simulation,
+              numerical analysis, and computational tools.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ABOUT -->
+    <section id="about" class="section">
+      <div class="container about">
+
+        <div>
+          <p class="section-label">ABOUT</p>
+          <h2>About Me</h2>
+        </div>
+
+        <div class="about-text">
+          <p>
+            I'm Yun SangWon, an Electrical and Electronic Engineering
+            student in Seoul, South Korea.
+          </p>
+
+          <p>
+            My interests span wireless communications,
+            semiconductor technology, and computing.
+            I use this website to document projects,
+            engineering experiments, and things I learn along the way.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+
+  <footer>
+    <div class="container footer-content">
+
+      <p>
+        © 2026 Yun SangWon
+      </p>
+
+      <p>
+        Built with HTML & CSS · Hosted on GitHub Pages
+      </p>
+
+    </div>
+  </footer>
+
 </body>
 </html>
