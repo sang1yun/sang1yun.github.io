@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>
+    Wireless Channel Modeling & Probabilistic Shaping | Yun SangWon
+  </title>
+
+  <link rel="stylesheet" href="../style.css" />
+
+  <style>
+
+    .project-page {
+      padding: 100px 0 140px;
+    }
+
+    .back-link {
+      display: inline-block;
+
+      margin-bottom: 60px;
+
+      color: #666;
+
+      font-size: 14px;
+    }
+
+    .project-title {
+      font-size: clamp(46px, 8vw, 82px);
+
+      line-height: 1.05;
+
+      letter-spacing: -0.04em;
+
+      max-width: 1000px;
+    }
+
+    .project-intro {
+      max-width: 720px;
+
+      margin-top: 40px;
+
+      font-size: 20px;
+
+      color: #555;
+
+      line-height: 1.7;
+    }
+
+    .project-meta {
+      margin-top: 60px;
+
+      padding-top: 25px;
+
+      border-top: 1px solid #ddd;
+
+      display: grid;
+
+      grid-template-columns: repeat(3, 1fr);
+
+      gap: 20px;
+    }
+
+    .meta-title {
+      font-size: 12px;
+
+      letter-spacing: 0.12em;
+
+      color: #888;
+
+      margin-bottom: 8px;
+    }
+
+    .project-section {
+      margin-top: 120px;
+    }
+
+    .project-section h2 {
+      font-size: 38px;
+
+      margin-bottom: 25px;
+    }
+
+    .project-section p {
+      max-width: 750px;
+
+      font-size: 18px;
+
+      line-height: 1.8;
+
+      color: #444;
+    }
+
+    .project-section p + p {
+      margin-top: 20px;
+    }
+
+    .project-image {
+      width: 100%;
+
+      margin-top: 40px;
+
+      border: 1px solid #ddd;
+
+      border-radius: 10px;
+    }
+
+    .image-caption {
+      font-size: 13px !important;
+
+      color: #888 !important;
+
+      margin-top: 10px !important;
+    }
+
+    .result-box {
+      margin-top: 40px;
+
+      padding: 30px;
+
+      background: #f7f7f7;
+
+      border-radius: 12px;
+
+      max-width: 800px;
+    }
+
+    .result-box strong {
+      display: block;
+
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 700px) {
+
+      .project-meta {
+        grid-template-columns: 1fr;
+      }
+
+    }
+
+  </style>
+</head>
+
+
+<body>
+
+<header class="navbar">
+
+  <div class="container nav-container">
+
+    <a href="../index.html" class="logo">
+      Yun SangWon
+    </a>
+
+    <nav>
+
+      <a href="../index.html#projects">
+        Projects
+      </a>
+
+      <a
+        href="https://github.com/sang1yun"
+        target="_blank"
+      >
+        GitHub
+      </a>
+
+    </nav>
+
+  </div>
+
+</header>
+
+
+<main class="project-page">
+
+<div class="container">
+
+  <a href="../index.html" class="back-link">
+    ← Back to Home
+  </a>
+
+
+  <p class="section-label">
+    CAPSTONE DESIGN · 2026
+  </p>
+
+
+  <h1 class="project-title">
+    Site-Specific Wireless Channel Modeling
+    & Probabilistic Shaping
+  </h1>
+
+
+  <p class="project-intro">
+
+    A simulation-based study combining site-specific
+    3D ray tracing with probabilistic constellation shaping
+    to investigate communication performance in
+    multi-user interference channels.
+
+  </p>
+
+
+  <div class="project-meta">
+
+    <div>
+      <p class="meta-title">AREA</p>
+      <p>Wireless Communications</p>
+    </div>
+
+    <div>
+      <p class="meta-title">TOOLS</p>
+      <p>Python · Sionna RT · TensorFlow · Blender</p>
+    </div>
+
+    <div>
+      <p class="meta-title">FREQUENCY</p>
+      <p>28 GHz</p>
+    </div>
+
+  </div>
+
+
+
+  <!-- OVERVIEW -->
+
+  <section class="project-section">
+
+    <p class="section-label">
+      01 · OVERVIEW
+    </p>
+
+    <h2>
+      Project Overview
+    </h2>
+
+    <p>
+
+      The goal of this project was to construct
+      a site-specific wireless channel model
+      and use the resulting channels to study
+      communication performance under interference.
+
+    </p>
+
+    <p>
+
+      A 3D model of an outdoor environment around
+      the engineering buildings at Yonsei University
+      was created and used in Sionna RT
+      to simulate wireless propagation.
+
+    </p>
+
+    <p>
+
+      Multiple transmitter and receiver configurations
+      were evaluated to construct 2×2 interference-channel
+      matrices.
+
+    </p>
+
+  </section>
+
+
+
+  <!-- RAY TRACING -->
+
+  <section class="project-section">
+
+    <p class="section-label">
+      02 · CHANNEL MODELING
+    </p>
+
+    <h2>
+      Site-Specific Ray Tracing
+    </h2>
+
+    <p>
+
+      The environment geometry was reconstructed
+      using photographs and 3D modeling tools,
+      then simplified in Blender for use
+      in electromagnetic ray-tracing simulations.
+
+    </p>
+
+    <p>
+
+      The resulting scene was imported into
+      Sionna RT and evaluated at 28 GHz.
+      Line-of-sight and reflected propagation paths
+      were used to estimate complex channel coefficients.
+
+    </p>
+
+
+    <img
+      src="../images/raytracing.png"
+      alt="Sionna RT ray tracing simulation"
+      class="project-image"
+    />
+
+    <p class="image-caption">
+      Example ray-tracing scene with transmitter
+      and receiver positions.
+    </p>
+
+  </section>
+
+
+
+  <!-- INTERFERENCE CHANNEL -->
+
+  <section class="project-section">
+
+    <p class="section-label">
+      03 · INTERFERENCE CHANNEL
+    </p>
+
+    <h2>
+      2×2 Channel Modeling
+    </h2>
+
+    <p>
+
+      Channel coefficients extracted from the
+      ray-tracing simulation were organized
+      into a 2×2 complex channel matrix.
+
+    </p>
+
+    <p>
+
+      The received signals were modeled as
+
+    </p>
+
+    <div class="result-box">
+
+      <strong>Receiver 1</strong>
+
+      <p>
+        Y₁ = h₁₁X₁ + h₂₁X₂ + N₁
+      </p>
+
+      <br />
+
+      <strong>Receiver 2</strong>
+
+      <p>
+        Y₂ = h₂₂X₂ + h₁₂X₁ + N₂
+      </p>
+
+    </div>
+
+    <p>
+
+      The diagonal terms represent the desired links,
+      while the off-diagonal terms represent
+      cross-user interference.
+
+    </p>
+
+  </section>
+
+
+
+  <!-- PROBABILISTIC SHAPING -->
+
+  <section class="project-section">
+
+    <p class="section-label">
+      04 · PROBABILISTIC SHAPING
+    </p>
+
+    <h2>
+      Optimizing 16-QAM
+    </h2>
+
+    <p>
+
+      Instead of assigning equal probability
+      to all 16-QAM symbols,
+      the probability distribution of each user's
+      constellation was optimized.
+
+    </p>
+
+    <p>
+
+      Gradient-based optimization with Adam
+      was used to adjust symbol probabilities
+      according to an objective that considered
+      mutual information and transmission power.
+
+    </p>
+
+
+    <img
+      src="../images/qam.png"
+      alt="16-QAM probabilistic shaping"
+      class="project-image"
+    />
+
+    <p class="image-caption">
+      Example optimized probability distribution
+      over a 16-QAM constellation.
+    </p>
+
+  </section>
+
+
+
+  <!-- RESULTS -->
+
+  <section class="project-section">
+
+    <p class="section-label">
+      05 · RESULTS
+    </p>
+
+    <h2>
+      MI–Power Trade-off
+    </h2>
+
+    <p>
+
+      Different optimization weights produced
+      different symbol probability distributions.
+
+    </p>
+
+    <p>
+
+      When mutual information was emphasized,
+      the shaping distribution favored
+      communication performance.
+
+      When the power penalty was increased,
+      probability mass shifted toward
+      lower-energy constellation points.
+
+    </p>
+
+
+    <img
+      src="../images/mi-power.png"
+      alt="Mutual information and power tradeoff"
+      class="project-image"
+    />
+
+
+    <div class="result-box">
+
+      <strong>Key Observation</strong>
+
+      <p>
+
+        Probabilistic shaping can control the
+        trade-off between mutual information
+        and transmission power in a
+        multi-user interference channel.
+
+      </p>
+
+    </div>
+
+  </section>
+
+
+
+  <!-- TOOLS -->
+
+  <section class="project-section">
+
+    <p class="section-label">
+      06 · TOOLS
+    </p>
+
+    <h2>
+      Technical Stack
+    </h2>
+
+    <div class="tags">
+
+      <span>Python</span>
+
+      <span>TensorFlow</span>
+
+      <span>Sionna RT</span>
+
+      <span>Mitsuba</span>
+
+      <span>Blender</span>
+
+      <span>NumPy</span>
+
+      <span>Pandas</span>
+
+      <span>Matplotlib</span>
+
+    </div>
+
+  </section>
+
+
+</div>
+
+</main>
+
+
+<footer>
+
+  <div class="container footer-content">
+
+    <p>
+      © 2026 Yun SangWon
+    </p>
+
+    <p>
+      sang1yun.github.io
+    </p>
+
+  </div>
+
+</footer>
+
+
+</body>
+</html>
