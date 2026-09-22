@@ -90,15 +90,15 @@
       margin-top: 14px;
       font-family: monospace;
       font-size: 14px;
-      line-height: 1.7;
+      line-height: 1.8;
     }
 
     .parameter-input-grid {
       display: grid;
-      grid-template-columns: 180px 180px;
+      grid-template-columns: 190px 180px;
       gap: 10px;
       align-items: center;
-      max-width: 430px;
+      max-width: 450px;
       margin-bottom: 18px;
     }
 
@@ -108,7 +108,7 @@
 
     .parameter-display-grid {
       display: grid;
-      grid-template-columns: 190px 180px;
+      grid-template-columns: 190px 200px;
       gap: 8px;
       font-family: monospace;
       margin-top: 18px;
@@ -190,10 +190,6 @@
       min-height: 18px;
     }
 
-    .success {
-      color: #087a22;
-    }
-
     .counter {
       font-family: monospace;
       margin-top: 8px;
@@ -222,7 +218,57 @@
       margin-top: 10px;
       border-radius: 7px;
       font-family: monospace;
-      line-height: 1.7;
+      line-height: 1.8;
+    }
+
+    .comparison-box {
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 8px;
+      font-family: monospace;
+      line-height: 1.6;
+    }
+
+    .legend {
+      display: flex;
+      gap: 22px;
+      align-items: center;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .legend-line-blue {
+      width: 30px;
+      height: 3px;
+      background: #0066cc;
+    }
+
+    .legend-line-red {
+      width: 30px;
+      border-top: 3px dashed #cc3333;
+    }
+
+    .checkbox-row {
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    .checkbox-row input {
+      width: auto;
     }
   </style>
 </head>
@@ -233,11 +279,17 @@
   <h1>1D Wave Equation Simulator</h1>
 
   <div class="equation">
+
     ∂²u/∂t² = c² ∂²u/∂x²
+
     <br>
+
     u(x,0) = f(x),
+
     &nbsp;
+
     ∂u/∂t(x,0) = g(x)
+
   </div>
 
 
@@ -254,6 +306,27 @@
       width="920"
       height="440">
     </canvas>
+
+
+    <div class="legend">
+
+      <div class="legend-item">
+
+        <div class="legend-line-blue"></div>
+
+        Numerical
+
+      </div>
+
+      <div class="legend-item">
+
+        <div class="legend-line-red"></div>
+
+        Exact
+
+      </div>
+
+    </div>
 
 
     <div class="controls">
@@ -277,7 +350,7 @@
 
       Time =
       <span id="timeDisplay">
-        0.000
+        0.0000
       </span>
       s
 
@@ -285,8 +358,50 @@
 
       Maximum |u| =
       <span id="amplitudeDisplay">
-        0.000
+        0
       </span>
+
+    </div>
+
+
+    <div class="comparison-box">
+
+      <b>Numerical / Exact Comparison</b>
+
+      <div class="comparison-grid">
+
+        <div>Exact solution</div>
+        <div id="exactStatus">
+          N/A
+        </div>
+
+        <div>L2 error</div>
+        <div id="l2ErrorDisplay">
+          N/A
+        </div>
+
+        <div>Relative L2 error</div>
+        <div id="relativeErrorDisplay">
+          N/A
+        </div>
+
+      </div>
+
+
+      <div class="checkbox-row">
+
+        <label>
+
+          <input
+            type="checkbox"
+            id="showExact"
+            checked>
+
+          Show exact solution when available
+
+        </label>
+
+      </div>
 
     </div>
 
@@ -306,6 +421,7 @@
   <div class="panel">
 
     <h2>Numerical Parameters</h2>
+
 
     <div class="parameter-input-grid">
 
@@ -399,7 +515,7 @@
 
       <br><br>
 
-      For this explicit finite-difference method:
+      Explicit finite difference stability:
 
       <br>
 
@@ -407,7 +523,7 @@
 
       <br>
 
-      CFL &gt; 1 → numerically unstable
+      CFL &gt; 1 → unstable
 
     </div>
 
@@ -423,9 +539,7 @@
     <h2>Initial Conditions</h2>
 
 
-    <!-- ===================================================
-         Displacement
-         =================================================== -->
+    <!-- displacement -->
 
     <div>
 
@@ -467,8 +581,6 @@
       </p>
 
 
-      <!-- Custom displacement -->
-
       <div
         id="displacementCustomBox"
         class="input-box">
@@ -483,8 +595,7 @@
           <input
             type="text"
             id="displacementCustom"
-            value="sin(2*pi*x)"
-            placeholder="sin(2*pi*x)">
+            value="sin(2*pi*x)">
 
           <button id="applyDisplacementCustom">
             Apply
@@ -520,8 +631,6 @@
       </div>
 
 
-      <!-- Discrete displacement -->
-
       <div
         id="displacementDiscreteBox"
         class="input-box">
@@ -529,22 +638,24 @@
         <div class="input-label">
 
           Enter
+
           <span id="displacementRequiredCount">
             101
           </span>
+
           displacement values
 
         </div>
 
 
         <textarea
-          id="displacementDiscrete"
-          placeholder="Paste values from Excel."></textarea>
+          id="displacementDiscrete">
+        </textarea>
 
 
         <div class="counter">
 
-          Detected values:
+          Detected:
 
           <span id="displacementDiscreteCount">
             0
@@ -576,21 +687,6 @@
         </div>
 
 
-        <div class="info">
-
-          One value is required for each spatial grid node.
-
-          <br>
-
-          If N = 100, there are 101 values.
-
-          <br>
-
-          If N = 200, there are 201 values.
-
-        </div>
-
-
         <div
           id="displacementDiscreteError"
           class="error">
@@ -601,9 +697,7 @@
     </div>
 
 
-    <!-- ===================================================
-         Velocity
-         =================================================== -->
+    <!-- velocity -->
 
     <div class="input-section">
 
@@ -641,8 +735,6 @@
       </p>
 
 
-      <!-- Custom velocity -->
-
       <div
         id="velocityCustomBox"
         class="input-box">
@@ -657,31 +749,11 @@
           <input
             type="text"
             id="velocityCustom"
-            value="0"
-            placeholder="sin(pi*x)">
+            value="0">
 
           <button id="applyVelocityCustom">
             Apply
           </button>
-
-        </div>
-
-
-        <div class="example-box">
-
-          0
-
-          <br>
-
-          sin(pi*x)
-
-          <br>
-
-          5*sin(2*pi*x)
-
-          <br>
-
-          exp(-100*(x-0.5)^2)
 
         </div>
 
@@ -694,8 +766,6 @@
       </div>
 
 
-      <!-- Discrete velocity -->
-
       <div
         id="velocityDiscreteBox"
         class="input-box">
@@ -703,22 +773,24 @@
         <div class="input-label">
 
           Enter
+
           <span id="velocityRequiredCount">
             101
           </span>
+
           velocity values
 
         </div>
 
 
         <textarea
-          id="velocityDiscrete"
-          placeholder="Paste values from Excel."></textarea>
+          id="velocityDiscrete">
+        </textarea>
 
 
         <div class="counter">
 
-          Detected values:
+          Detected:
 
           <span id="velocityDiscreteCount">
             0
@@ -763,15 +835,7 @@
         class="preset-note"
         style="display:none;">
 
-        For a right-moving wave
-
-        <br><br>
-
-        u(x,t) = F(x-ct)
-
-        <br><br>
-
-        the required initial velocity is
+        Right-moving condition:
 
         <br><br>
 
@@ -792,11 +856,6 @@
 
 const L = 1.0;
 
-
-/*
-  These are now variable.
-*/
-
 let N = 100;
 
 let c = 1.0;
@@ -805,12 +864,11 @@ let CFL = 0.8;
 
 let dx = L / N;
 
-let dt =
-  CFL * dx / c;
+let dt = CFL * dx / c;
 
 
 /* =========================================================
-   2. Grid and state arrays
+   2. Arrays
    ========================================================= */
 
 let x = [];
@@ -836,23 +894,18 @@ let running = false;
 
 
 /* =========================================================
-   3. Create grid
+   3. Grid
    ========================================================= */
 
 function buildGrid() {
 
-  dx =
-    L / N;
+  dx = L / N;
 
-
-  dt =
-    CFL * dx / c;
+  dt = CFL * dx / c;
 
 
   x =
-    new Array(
-      N + 1
-    );
+    new Array(N + 1);
 
 
   for (
@@ -868,45 +921,28 @@ function buildGrid() {
 
 
   uPrev =
-    new Array(
-      N + 1
-    ).fill(0);
-
+    new Array(N + 1).fill(0);
 
   uCurr =
-    new Array(
-      N + 1
-    ).fill(0);
-
+    new Array(N + 1).fill(0);
 
   uNext =
-    new Array(
-      N + 1
-    ).fill(0);
-
+    new Array(N + 1).fill(0);
 
   gInitial =
-    new Array(
-      N + 1
-    ).fill(0);
-
+    new Array(N + 1).fill(0);
 
   displacementDiscreteValues =
-    new Array(
-      N + 1
-    ).fill(0);
-
+    new Array(N + 1).fill(0);
 
   velocityDiscreteValues =
-    new Array(
-      N + 1
-    ).fill(0);
+    new Array(N + 1).fill(0);
 
 }
 
 
 /* =========================================================
-   4. Expression parser
+   4. Mathematical parser
    ========================================================= */
 
 function tokenize(expression) {
@@ -1024,7 +1060,6 @@ function tokenize(expression) {
 
         word +=
           expression[i];
-
 
         i++;
 
@@ -1383,7 +1418,7 @@ function evaluateExpression(
 
           throw new Error(
             name
-            + " must be followed by (...)."
+            + " requires (...)."
           );
 
         }
@@ -1415,7 +1450,7 @@ function evaluateExpression(
         ) {
 
           throw new Error(
-            "Function returned invalid value."
+            "Invalid function result."
           );
 
         }
@@ -1451,17 +1486,6 @@ function evaluateExpression(
 
     throw new Error(
       "Unexpected part of expression."
-    );
-
-  }
-
-
-  if (
-    !Number.isFinite(result)
-  ) {
-
-    throw new Error(
-      "Expression returned invalid value."
     );
 
   }
@@ -1514,7 +1538,7 @@ function parseDiscrete(text) {
 
       "Expected "
       + (N + 1)
-      + " values, but found "
+      + " values, found "
       + parts.length
       + "."
 
@@ -1525,30 +1549,24 @@ function parseDiscrete(text) {
 
   return parts.map(
 
-    function(
-      item,
-      index
-    ) {
+    function(value) {
 
-      const value =
-        Number(item);
+      const number =
+        Number(value);
 
 
       if (
-        !Number.isFinite(value)
+        !Number.isFinite(number)
       ) {
 
         throw new Error(
-
-          "Invalid value at position "
-          + (index + 1)
-
+          "Invalid numerical value."
         );
 
       }
 
 
-      return value;
+      return number;
 
     }
 
@@ -1558,7 +1576,7 @@ function parseDiscrete(text) {
 
 
 /* =========================================================
-   6. Count discrete inputs
+   6. Discrete counter
    ========================================================= */
 
 function countDiscrete(
@@ -1624,7 +1642,7 @@ function countDiscrete(
 
 
 /* =========================================================
-   7. Displacement
+   7. Initial displacement
    ========================================================= */
 
 function displacementFunction(
@@ -1645,8 +1663,7 @@ function displacementFunction(
   ) {
 
     return Math.sin(
-      Math.PI
-      * xValue
+      Math.PI * xValue
     );
 
   }
@@ -1664,9 +1681,7 @@ function displacementFunction(
       xValue <= peak
     ) {
 
-      return (
-        xValue / peak
-      );
+      return xValue / peak;
 
     }
 
@@ -1754,7 +1769,7 @@ function displacementFunction(
 
 
 /* =========================================================
-   8. Velocity
+   8. Initial velocity
    ========================================================= */
 
 function velocityFunction(
@@ -1809,12 +1824,6 @@ function velocityFunction(
   }
 
 
-  /*
-    Right-moving Gaussian
-
-    g(x) = -c f'(x)
-  */
-
   if (
     type === "rightGaussian"
   ) {
@@ -1861,8 +1870,7 @@ function velocityFunction(
       /
 
       (
-        sigma
-        * sigma
+        sigma * sigma
       )
 
       *
@@ -1880,7 +1888,276 @@ function velocityFunction(
 
 
 /* =========================================================
-   9. UI
+   9. Exact solution availability
+   ========================================================= */
+
+function exactSolutionAvailable() {
+
+  const displacement =
+    document
+      .getElementById(
+        "displacementType"
+      )
+      .value;
+
+
+  const velocity =
+    document
+      .getElementById(
+        "velocityType"
+      )
+      .value;
+
+
+  return (
+
+    displacement === "sine"
+
+    &&
+
+    velocity === "zero"
+
+  );
+
+}
+
+
+/* =========================================================
+   10. Exact solution
+   ========================================================= */
+
+/*
+  For
+
+  f(x) = sin(pi x)
+
+  g(x) = 0
+
+  fixed boundaries,
+
+  u(x,t)
+  =
+  sin(pi x)
+  cos(pi c t)
+*/
+
+function exactSolution(
+  xValue,
+  tValue
+) {
+
+  return (
+
+    Math.sin(
+      Math.PI
+      * xValue
+    )
+
+    *
+
+    Math.cos(
+      Math.PI
+      * c
+      * tValue
+    )
+
+  );
+
+}
+
+
+/* =========================================================
+   11. L2 error
+   ========================================================= */
+
+function calculateErrors() {
+
+  if (
+    !exactSolutionAvailable()
+  ) {
+
+    return null;
+
+  }
+
+
+  let errorSum =
+    0;
+
+
+  let exactSum =
+    0;
+
+
+  for (
+    let i = 0;
+    i <= N;
+    i++
+  ) {
+
+    const exact =
+      exactSolution(
+        x[i],
+        time
+      );
+
+
+    const difference =
+      uCurr[i]
+      - exact;
+
+
+    errorSum +=
+      difference
+      * difference;
+
+
+    exactSum +=
+      exact
+      * exact;
+
+  }
+
+
+  const l2 =
+    Math.sqrt(
+      dx
+      * errorSum
+    );
+
+
+  const exactNorm =
+    Math.sqrt(
+      dx
+      * exactSum
+    );
+
+
+  let relative =
+    null;
+
+
+  /*
+    Near exact zero crossings,
+    relative error is not useful.
+  */
+
+  if (
+    exactNorm > 1e-10
+  ) {
+
+    relative =
+      l2 / exactNorm;
+
+  }
+
+
+  return {
+
+    l2: l2,
+
+    relative: relative
+
+  };
+
+}
+
+
+/* =========================================================
+   12. Update comparison
+   ========================================================= */
+
+function updateComparison() {
+
+  const exactStatus =
+    document
+      .getElementById(
+        "exactStatus"
+      );
+
+
+  const l2Display =
+    document
+      .getElementById(
+        "l2ErrorDisplay"
+      );
+
+
+  const relativeDisplay =
+    document
+      .getElementById(
+        "relativeErrorDisplay"
+      );
+
+
+  if (
+    !exactSolutionAvailable()
+  ) {
+
+    exactStatus.textContent =
+      "N/A for selected initial conditions";
+
+
+    l2Display.textContent =
+      "N/A";
+
+
+    relativeDisplay.textContent =
+      "N/A";
+
+
+    return;
+
+  }
+
+
+  exactStatus.textContent =
+    "u(x,t) = sin(πx) cos(πct)";
+
+
+  const errors =
+    calculateErrors();
+
+
+  l2Display.textContent =
+    errors.l2.toExponential(6);
+
+
+  if (
+    errors.relative === null
+  ) {
+
+    relativeDisplay.textContent =
+      "N/A (exact solution norm ≈ 0)";
+
+  }
+
+
+  else {
+
+    relativeDisplay.textContent =
+
+      errors.relative.toExponential(6)
+
+      +
+
+      "  (" +
+
+      (
+        errors.relative * 100
+      ).toFixed(4)
+
+      +
+
+      " %)";
+
+  }
+
+}
+
+
+/* =========================================================
+   13. Initial-condition UI
    ========================================================= */
 
 function updateDisplacementUI() {
@@ -1893,6 +2170,20 @@ function updateDisplacementUI() {
       .value;
 
 
+  const custom =
+    document
+      .getElementById(
+        "displacementCustomBox"
+      );
+
+
+  const discrete =
+    document
+      .getElementById(
+        "displacementDiscreteBox"
+      );
+
+
   const description =
     document
       .getElementById(
@@ -1900,25 +2191,11 @@ function updateDisplacementUI() {
       );
 
 
-  const customBox =
-    document
-      .getElementById(
-        "displacementCustomBox"
-      );
-
-
-  const discreteBox =
-    document
-      .getElementById(
-        "displacementDiscreteBox"
-      );
-
-
-  customBox.style.display =
+  custom.style.display =
     "none";
 
 
-  discreteBox.style.display =
+  discrete.style.display =
     "none";
 
 
@@ -1957,10 +2234,10 @@ function updateDisplacementUI() {
   ) {
 
     description.textContent =
-      "Enter an analytic function f(x).";
+      "Enter f(x).";
 
 
-    customBox.style.display =
+    custom.style.display =
       "block";
 
   }
@@ -1971,10 +2248,10 @@ function updateDisplacementUI() {
   ) {
 
     description.textContent =
-      "Specify one displacement value at each grid node.";
+      "Enter one value per grid node.";
 
 
-    discreteBox.style.display =
+    discrete.style.display =
       "block";
 
 
@@ -1998,6 +2275,27 @@ function updateVelocityUI() {
       .value;
 
 
+  const custom =
+    document
+      .getElementById(
+        "velocityCustomBox"
+      );
+
+
+  const discrete =
+    document
+      .getElementById(
+        "velocityDiscreteBox"
+      );
+
+
+  const note =
+    document
+      .getElementById(
+        "rightGaussianNote"
+      );
+
+
   const description =
     document
       .getElementById(
@@ -2005,36 +2303,15 @@ function updateVelocityUI() {
       );
 
 
-  const customBox =
-    document
-      .getElementById(
-        "velocityCustomBox"
-      );
-
-
-  const discreteBox =
-    document
-      .getElementById(
-        "velocityDiscreteBox"
-      );
-
-
-  const rightNote =
-    document
-      .getElementById(
-        "rightGaussianNote"
-      );
-
-
-  customBox.style.display =
+  custom.style.display =
     "none";
 
 
-  discreteBox.style.display =
+  discrete.style.display =
     "none";
 
 
-  rightNote.style.display =
+  note.style.display =
     "none";
 
 
@@ -2053,10 +2330,10 @@ function updateVelocityUI() {
   ) {
 
     description.textContent =
-      "Enter an analytic initial velocity g(x).";
+      "Enter g(x).";
 
 
-    customBox.style.display =
+    custom.style.display =
       "block";
 
   }
@@ -2067,17 +2344,11 @@ function updateVelocityUI() {
   ) {
 
     description.textContent =
-      "Specify one velocity value at each grid node.";
+      "Enter one velocity per grid node.";
 
 
-    discreteBox.style.display =
+    discrete.style.display =
       "block";
-
-
-    countDiscrete(
-      "velocityDiscrete",
-      "velocityDiscreteCount"
-    );
 
   }
 
@@ -2087,10 +2358,10 @@ function updateVelocityUI() {
   ) {
 
     description.textContent =
-      "Uses g(x) = -c f'(x) for the Gaussian preset.";
+      "g(x) = -c f'(x) for Gaussian preset.";
 
 
-    rightNote.style.display =
+    note.style.display =
       "block";
 
   }
@@ -2099,84 +2370,70 @@ function updateVelocityUI() {
 
 
 /* =========================================================
-   10. Update parameter display
+   14. Parameter display
    ========================================================= */
 
 function updateParameterDisplay() {
 
-  document
-    .getElementById(
-      "LDisplay"
-    )
-    .textContent =
-      L.toFixed(2);
+  document.getElementById(
+    "LDisplay"
+  ).textContent =
+    L.toFixed(2);
 
 
-  document
-    .getElementById(
-      "NDisplay"
-    )
-    .textContent =
-      N;
+  document.getElementById(
+    "NDisplay"
+  ).textContent =
+    N;
 
 
-  document
-    .getElementById(
-      "nodeDisplay"
-    )
-    .textContent =
-      N + 1;
+  document.getElementById(
+    "nodeDisplay"
+  ).textContent =
+    N + 1;
 
 
-  document
-    .getElementById(
-      "dxDisplay"
-    )
-    .textContent =
-      dx.toFixed(6);
+  document.getElementById(
+    "dxDisplay"
+  ).textContent =
+    dx.toFixed(6);
 
 
-  document
-    .getElementById(
-      "cDisplay"
-    )
-    .textContent =
-      c.toFixed(4);
+  document.getElementById(
+    "cDisplay"
+  ).textContent =
+    c.toFixed(4);
 
 
-  document
-    .getElementById(
-      "dtDisplay"
-    )
-    .textContent =
-      dt.toFixed(6);
+  document.getElementById(
+    "dtDisplay"
+  ).textContent =
+    dt.toFixed(6);
 
 
-  const cflDisplay =
-    document
-      .getElementById(
-        "cflDisplay"
-      );
+  const display =
+    document.getElementById(
+      "cflDisplay"
+    );
 
 
   const warning =
-    document
-      .getElementById(
-        "cflWarning"
-      );
+    document.getElementById(
+      "cflWarning"
+    );
 
 
   if (
     CFL <= 1
   ) {
 
-    cflDisplay.textContent =
+    display.className =
+      "stable";
+
+
+    display.textContent =
       CFL.toFixed(3)
       + " ✓ Stable";
-
-
-    cflDisplay.className =
-      "stable";
 
 
     warning.style.display =
@@ -2187,13 +2444,13 @@ function updateParameterDisplay() {
 
   else {
 
-    cflDisplay.textContent =
+    display.className =
+      "unstable";
+
+
+    display.textContent =
       CFL.toFixed(3)
       + " ⚠ Unstable";
-
-
-    cflDisplay.className =
-      "unstable";
 
 
     warning.style.display =
@@ -2201,69 +2458,43 @@ function updateParameterDisplay() {
 
 
     warning.textContent =
-
-      "CFL > 1. The simulation is intentionally allowed to run, "
-      + "but the finite-difference solution is expected to become numerically unstable.";
+      "CFL > 1. Numerical instability is expected.";
 
   }
 
-
-  /*
-    Dynamic discrete sample count
-  */
 
   const required =
     N + 1;
 
 
-  document
-    .getElementById(
-      "displacementRequiredCount"
-    )
-    .textContent =
-      required;
+  document.getElementById(
+    "displacementRequiredCount"
+  ).textContent =
+    required;
 
 
-  document
-    .getElementById(
-      "displacementTargetCount"
-    )
-    .textContent =
-      required;
+  document.getElementById(
+    "displacementTargetCount"
+  ).textContent =
+    required;
 
 
-  document
-    .getElementById(
-      "velocityRequiredCount"
-    )
-    .textContent =
-      required;
+  document.getElementById(
+    "velocityRequiredCount"
+  ).textContent =
+    required;
 
 
-  document
-    .getElementById(
-      "velocityTargetCount"
-    )
-    .textContent =
-      required;
-
-
-  countDiscrete(
-    "displacementDiscrete",
-    "displacementDiscreteCount"
-  );
-
-
-  countDiscrete(
-    "velocityDiscrete",
-    "velocityDiscreteCount"
-  );
+  document.getElementById(
+    "velocityTargetCount"
+  ).textContent =
+    required;
 
 }
 
 
 /* =========================================================
-   11. Initialize simulation
+   15. Initialize
    ========================================================= */
 
 function initializeWave() {
@@ -2280,53 +2511,16 @@ function initializeWave() {
     true;
 
 
-  document
-    .getElementById(
-      "simulationWarning"
-    )
-    .style.display =
-      "none";
-
-
   const displacementType =
-    document
-      .getElementById(
-        "displacementType"
-      )
-      .value;
+    document.getElementById(
+      "displacementType"
+    ).value;
 
 
   const velocityType =
-    document
-      .getElementById(
-        "velocityType"
-      )
-      .value;
-
-
-  const errorIds = [
-
-    "displacementCustomError",
-
-    "displacementDiscreteError",
-
-    "velocityCustomError",
-
-    "velocityDiscreteError"
-
-  ];
-
-
-  for (
-    const id of errorIds
-  ) {
-
-    document
-      .getElementById(id)
-      .textContent =
-        "";
-
-  }
+    document.getElementById(
+      "velocityType"
+    ).value;
 
 
   try {
@@ -2338,11 +2532,9 @@ function initializeWave() {
       displacementDiscreteValues =
         parseDiscrete(
 
-          document
-            .getElementById(
-              "displacementDiscrete"
-            )
-            .value
+          document.getElementById(
+            "displacementDiscrete"
+          ).value
 
         );
 
@@ -2356,11 +2548,9 @@ function initializeWave() {
       velocityDiscreteValues =
         parseDiscrete(
 
-          document
-            .getElementById(
-              "velocityDiscrete"
-            )
-            .value
+          document.getElementById(
+            "velocityDiscrete"
+          ).value
 
         );
 
@@ -2389,10 +2579,6 @@ function initializeWave() {
     }
 
 
-    /*
-      Fixed boundary
-    */
-
     uCurr[0] =
       0;
 
@@ -2419,80 +2605,25 @@ function initializeWave() {
       ).fill(0);
 
 
-    document
-      .getElementById(
-        "timeDisplay"
-      )
-      .textContent =
-        "0.000";
+    document.getElementById(
+      "timeDisplay"
+    ).textContent =
+      "0.0000";
 
 
     drawWave();
+
+
+    updateComparison();
 
   }
 
 
   catch(error) {
 
-    if (
-      displacementType === "custom"
-    ) {
-
-      document
-        .getElementById(
-          "displacementCustomError"
-        )
-        .textContent =
-          "Error: "
-          + error.message;
-
-    }
-
-
-    else if (
-      displacementType === "discrete"
-    ) {
-
-      document
-        .getElementById(
-          "displacementDiscreteError"
-        )
-        .textContent =
-          "Error: "
-          + error.message;
-
-    }
-
-
-    else if (
-      velocityType === "custom"
-    ) {
-
-      document
-        .getElementById(
-          "velocityCustomError"
-        )
-        .textContent =
-          "Error: "
-          + error.message;
-
-    }
-
-
-    else if (
-      velocityType === "discrete"
-    ) {
-
-      document
-        .getElementById(
-          "velocityDiscreteError"
-        )
-        .textContent =
-          "Error: "
-          + error.message;
-
-    }
-
+    alert(
+      error.message
+    );
 
     return false;
 
@@ -2505,7 +2636,7 @@ function initializeWave() {
 
 
 /* =========================================================
-   12. Numerical solver
+   16. Numerical solver
    ========================================================= */
 
 function updateWave() {
@@ -2513,10 +2644,6 @@ function updateWave() {
   const r =
     c * dt / dx;
 
-
-  /*
-    First time step
-  */
 
   if (
     firstStepPending
@@ -2586,10 +2713,6 @@ function updateWave() {
   }
 
 
-  /*
-    Standard central finite difference
-  */
-
   for (
     let i = 1;
     i < N;
@@ -2647,13 +2770,12 @@ function updateWave() {
 
 
 /* =========================================================
-   13. Maximum amplitude
+   17. Max amplitude
    ========================================================= */
 
-function getMaximumAmplitude() {
+function maximumAmplitude() {
 
-  let maximum =
-    0;
+  let maximum = 0;
 
 
   for (
@@ -2662,25 +2784,12 @@ function getMaximumAmplitude() {
     i++
   ) {
 
-    const value =
-      Math.abs(
-        uCurr[i]
-      );
-
-
-    if (
-      !Number.isFinite(value)
-    ) {
-
-      return Infinity;
-
-    }
-
-
     maximum =
       Math.max(
         maximum,
-        value
+        Math.abs(
+          uCurr[i]
+        )
       );
 
   }
@@ -2692,25 +2801,23 @@ function getMaximumAmplitude() {
 
 
 /* =========================================================
-   14. Canvas
+   18. Canvas
    ========================================================= */
 
 const canvas =
-  document
-    .getElementById(
-      "waveCanvas"
-    );
+  document.getElementById(
+    "waveCanvas"
+  );
 
 
 const ctx =
-  canvas
-    .getContext(
-      "2d"
-    );
+  canvas.getContext(
+    "2d"
+  );
 
 
 /* =========================================================
-   15. Draw
+   19. Draw
    ========================================================= */
 
 function drawWave() {
@@ -2761,67 +2868,67 @@ function drawWave() {
     - marginBottom;
 
 
-  const maximum =
-    getMaximumAmplitude();
-
-
-  document
-    .getElementById(
-      "amplitudeDisplay"
-    )
-    .textContent =
-
-      Number.isFinite(maximum)
-
-        ? maximum.toExponential(3)
-
-        : "∞";
-
-
   /*
-    Prevent drawing errors once
-    instability reaches infinity.
+    Include exact curve in scale
+    if exact exists.
   */
+
+  let maximum =
+    maximumAmplitude();
+
+
+  if (
+    exactSolutionAvailable()
+  ) {
+
+    for (
+      let i = 0;
+      i <= N;
+      i++
+    ) {
+
+      maximum =
+        Math.max(
+
+          maximum,
+
+          Math.abs(
+
+            exactSolution(
+              x[i],
+              time
+            )
+
+          )
+
+        );
+
+    }
+
+  }
+
+
+  document.getElementById(
+    "amplitudeDisplay"
+  ).textContent =
+    maximum.toExponential(4);
+
 
   if (
     !Number.isFinite(maximum)
   ) {
 
-    running =
-      false;
-
-
-    const warning =
-      document
-        .getElementById(
-          "simulationWarning"
-        );
-
-
-    warning.style.display =
-      "block";
-
-
-    warning.textContent =
-      "The numerical solution overflowed. Reset the simulation or reduce the CFL number.";
-
+    running = false;
 
     return;
 
   }
 
 
-  /*
-    Dynamic vertical scale.
-  */
-
   const yRange =
     Math.max(
-
       1.2,
-
       maximum * 1.2
-
     );
 
 
@@ -2877,7 +2984,7 @@ function drawWave() {
 
 
   /*
-    Background
+    background
   */
 
   ctx.fillStyle =
@@ -2893,7 +3000,7 @@ function drawWave() {
 
 
   /*
-    Grid
+    grid
   */
 
   ctx.strokeStyle =
@@ -2927,7 +3034,8 @@ function drawWave() {
 
     ctx.lineTo(
       px,
-      marginTop + plotHeight
+      marginTop
+      + plotHeight
     );
 
 
@@ -2970,7 +3078,8 @@ function drawWave() {
 
 
     ctx.lineTo(
-      marginLeft + plotWidth,
+      marginLeft
+      + plotWidth,
       py
     );
 
@@ -2981,7 +3090,7 @@ function drawWave() {
 
 
   /*
-    Border
+    border
   */
 
   ctx.strokeStyle =
@@ -2997,19 +3106,11 @@ function drawWave() {
 
 
   /*
-    x axis
+    zero axis
   */
-
-  const zeroY =
-    yToPixel(0);
-
 
   ctx.strokeStyle =
     "#555";
-
-
-  ctx.lineWidth =
-    1.4;
 
 
   ctx.beginPath();
@@ -3017,13 +3118,14 @@ function drawWave() {
 
   ctx.moveTo(
     marginLeft,
-    zeroY
+    yToPixel(0)
   );
 
 
   ctx.lineTo(
-    marginLeft + plotWidth,
-    zeroY
+    marginLeft
+    + plotWidth,
+    yToPixel(0)
   );
 
 
@@ -3031,7 +3133,7 @@ function drawWave() {
 
 
   /*
-    x labels
+    labels
   */
 
   ctx.fillStyle =
@@ -3075,10 +3177,6 @@ function drawWave() {
   }
 
 
-  /*
-    y labels
-  */
-
   ctx.textAlign =
     "right";
 
@@ -3092,26 +3190,13 @@ function drawWave() {
     of yTicks
   ) {
 
-    let label;
+    const label =
 
+      Math.abs(value) > 9999
 
-    if (
-      Math.abs(value)
-      >= 10000
-    ) {
+      ? value.toExponential(1)
 
-      label =
-        value.toExponential(1);
-
-    }
-
-
-    else {
-
-      label =
-        value.toFixed(2);
-
-    }
+      : value.toFixed(2);
 
 
     ctx.fillText(
@@ -3128,7 +3213,7 @@ function drawWave() {
 
 
   /*
-    x axis title
+    x title
   */
 
   ctx.fillStyle =
@@ -3143,10 +3228,6 @@ function drawWave() {
     "center";
 
 
-  ctx.textBaseline =
-    "bottom";
-
-
   ctx.fillText(
 
     "x",
@@ -3154,13 +3235,13 @@ function drawWave() {
     marginLeft
     + plotWidth / 2,
 
-    height - 5
+    height - 8
 
   );
 
 
   /*
-    y axis title
+    y title
   */
 
   ctx.save();
@@ -3181,14 +3262,6 @@ function drawWave() {
   );
 
 
-  ctx.textAlign =
-    "center";
-
-
-  ctx.textBaseline =
-    "middle";
-
-
   ctx.fillText(
     "u(x,t)",
     0,
@@ -3199,9 +3272,9 @@ function drawWave() {
   ctx.restore();
 
 
-  /*
-    Wave
-  */
+  /* =====================================================
+     Numerical solution
+     ===================================================== */
 
   ctx.strokeStyle =
     "#0066cc";
@@ -3209,6 +3282,9 @@ function drawWave() {
 
   ctx.lineWidth =
     3;
+
+
+  ctx.setLineDash([]);
 
 
   ctx.beginPath();
@@ -3259,24 +3335,37 @@ function drawWave() {
   ctx.stroke();
 
 
-  /*
-    Discrete grid points
-  */
+  /* =====================================================
+     Exact solution
+     ===================================================== */
+
+  const showExact =
+    document.getElementById(
+      "showExact"
+    ).checked;
+
 
   if (
-    document
-      .getElementById(
-        "displacementType"
-      )
-      .value === "discrete"
-
+    showExact
     &&
-
-    time === 0
+    exactSolutionAvailable()
   ) {
 
-    ctx.fillStyle =
-      "#0066cc";
+    ctx.strokeStyle =
+      "#cc3333";
+
+
+    ctx.lineWidth =
+      2;
+
+
+    ctx.setLineDash([
+      8,
+      6
+    ]);
+
+
+    ctx.beginPath();
 
 
     for (
@@ -3285,37 +3374,59 @@ function drawWave() {
       i++
     ) {
 
-      ctx.beginPath();
+      const exact =
+        exactSolution(
+          x[i],
+          time
+        );
 
 
-      ctx.arc(
-
+      const px =
         xToPixel(
           x[i]
-        ),
+        );
 
+
+      const py =
         yToPixel(
-          uCurr[i]
-        ),
-
-        2.2,
-
-        0,
-
-        2 * Math.PI
-
-      );
+          exact
+        );
 
 
-      ctx.fill();
+      if (
+        i === 0
+      ) {
+
+        ctx.moveTo(
+          px,
+          py
+        );
+
+      }
+
+
+      else {
+
+        ctx.lineTo(
+          px,
+          py
+        );
+
+      }
 
     }
+
+
+    ctx.stroke();
+
+
+    ctx.setLineDash([]);
 
   }
 
 
   /*
-    Fixed endpoints
+    fixed endpoints
   */
 
   ctx.fillStyle =
@@ -3355,7 +3466,7 @@ function drawWave() {
 
 
 /* =========================================================
-   16. Animation
+   20. Animation
    ========================================================= */
 
 const stepsPerFrame =
@@ -3384,27 +3495,13 @@ function animate() {
   }
 
 
-  drawWave();
-
-
-  document
-    .getElementById(
-      "timeDisplay"
-    )
-    .textContent =
-      time.toFixed(4);
-
-
-  /*
-    Stop only after ridiculously large values.
-    This lets the user actually observe instability.
-  */
-
   const maximum =
-    getMaximumAmplitude();
+    maximumAmplitude();
 
 
   if (
+    !Number.isFinite(maximum)
+    ||
     maximum > 1e100
   ) {
 
@@ -3413,10 +3510,9 @@ function animate() {
 
 
     const warning =
-      document
-        .getElementById(
-          "simulationWarning"
-        );
+      document.getElementById(
+        "simulationWarning"
+      );
 
 
     warning.style.display =
@@ -3424,11 +3520,24 @@ function animate() {
 
 
     warning.textContent =
-      "The numerical solution has exploded due to instability. Maximum amplitude exceeded 10^100.";
+      "Numerical solution exploded. Reduce CFL or reset the simulation.";
+
 
     return;
 
   }
+
+
+  drawWave();
+
+
+  updateComparison();
+
+
+  document.getElementById(
+    "timeDisplay"
+  ).textContent =
+    time.toFixed(5);
 
 
   requestAnimationFrame(
@@ -3439,651 +3548,480 @@ function animate() {
 
 
 /* =========================================================
-   17. Apply parameters
+   21. Parameters
    ========================================================= */
 
-document
-  .getElementById(
-    "applyParametersButton"
-  )
-  .addEventListener(
-    "click",
-    function() {
+document.getElementById(
+  "applyParametersButton"
+).addEventListener(
+  "click",
+  function() {
+
+    running = false;
+
+
+    const newN =
+      Number(
+        document.getElementById(
+          "NInput"
+        ).value
+      );
+
+
+    const newC =
+      Number(
+        document.getElementById(
+          "cInput"
+        ).value
+      );
+
+
+    const newCFL =
+      Number(
+        document.getElementById(
+          "CFLInput"
+        ).value
+      );
+
+
+    if (
+      !Number.isInteger(newN)
+      ||
+      newN < 10
+      ||
+      newN > 1000
+    ) {
+
+      alert(
+        "N must be an integer between 10 and 1000."
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !Number.isFinite(newC)
+      ||
+      newC <= 0
+    ) {
+
+      alert(
+        "c must be positive."
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !Number.isFinite(newCFL)
+      ||
+      newCFL <= 0
+    ) {
+
+      alert(
+        "CFL must be positive."
+      );
+
+      return;
+
+    }
+
+
+    N =
+      newN;
+
+
+    c =
+      newC;
+
+
+    CFL =
+      newCFL;
+
+
+    buildGrid();
+
+
+    updateParameterDisplay();
+
+
+    initializeWave();
+
+  }
+);
+
+
+/* =========================================================
+   22. Main controls
+   ========================================================= */
+
+document.getElementById(
+  "playButton"
+).addEventListener(
+  "click",
+  function() {
+
+    if (
+      !running
+    ) {
 
       running =
-        false;
+        true;
 
 
-      const newN =
-        Number(
-
-          document
-            .getElementById(
-              "NInput"
-            )
-            .value
-
-        );
+      document.getElementById(
+        "simulationWarning"
+      ).style.display =
+        "none";
 
 
-      const newC =
-        Number(
+      requestAnimationFrame(
+        animate
+      );
 
-          document
-            .getElementById(
-              "cInput"
-            )
-            .value
+    }
 
-        );
+  }
+);
 
 
-      const newCFL =
-        Number(
+document.getElementById(
+  "pauseButton"
+).addEventListener(
+  "click",
+  function() {
 
-          document
-            .getElementById(
-              "CFLInput"
-            )
-            .value
+    running =
+      false;
 
-        );
-
-
-      if (
-        !Number.isInteger(newN)
-        ||
-        newN < 10
-        ||
-        newN > 1000
-      ) {
-
-        alert(
-          "N must be an integer between 10 and 1000."
-        );
-
-        return;
-
-      }
+  }
+);
 
 
-      if (
-        !Number.isFinite(newC)
-        ||
-        newC <= 0
-      ) {
-
-        alert(
-          "c must be positive."
-        );
-
-        return;
-
-      }
+document.getElementById(
+  "resetButton"
+).addEventListener(
+  "click",
+  initializeWave
+);
 
 
-      if (
-        !Number.isFinite(newCFL)
-        ||
-        newCFL <= 0
-      ) {
+/* =========================================================
+   23. Exact checkbox
+   ========================================================= */
 
-        alert(
-          "CFL must be positive."
-        );
+document.getElementById(
+  "showExact"
+).addEventListener(
+  "change",
+  function() {
 
-        return;
+    drawWave();
 
-      }
-
-
-      N =
-        newN;
+  }
+);
 
 
-      c =
-        newC;
+/* =========================================================
+   24. Initial-condition events
+   ========================================================= */
+
+document.getElementById(
+  "displacementType"
+).addEventListener(
+  "change",
+  function() {
+
+    running = false;
+
+    updateDisplacementUI();
+
+    initializeWave();
+
+  }
+);
 
 
-      CFL =
-        newCFL;
+document.getElementById(
+  "velocityType"
+).addEventListener(
+  "change",
+  function() {
+
+    running = false;
+
+    updateVelocityUI();
+
+    initializeWave();
+
+  }
+);
 
 
-      buildGrid();
+document.getElementById(
+  "applyDisplacementCustom"
+).addEventListener(
+  "click",
+  initializeWave
+);
 
 
-      updateParameterDisplay();
+document.getElementById(
+  "applyVelocityCustom"
+).addEventListener(
+  "click",
+  initializeWave
+);
 
 
-      /*
-        If discrete mode is active,
-        existing sample count may now be wrong.
-      */
+document.getElementById(
+  "applyDisplacementDiscrete"
+).addEventListener(
+  "click",
+  initializeWave
+);
 
-      if (
-        document
-          .getElementById(
-            "displacementType"
+
+document.getElementById(
+  "applyVelocityDiscrete"
+).addEventListener(
+  "click",
+  initializeWave
+);
+
+
+/* =========================================================
+   25. Discrete typing
+   ========================================================= */
+
+document.getElementById(
+  "displacementDiscrete"
+).addEventListener(
+  "input",
+  function() {
+
+    countDiscrete(
+      "displacementDiscrete",
+      "displacementDiscreteCount"
+    );
+
+  }
+);
+
+
+document.getElementById(
+  "velocityDiscrete"
+).addEventListener(
+  "input",
+  function() {
+
+    countDiscrete(
+      "velocityDiscrete",
+      "velocityDiscreteCount"
+    );
+
+  }
+);
+
+
+/* =========================================================
+   26. Clear
+   ========================================================= */
+
+document.getElementById(
+  "clearDisplacementDiscrete"
+).addEventListener(
+  "click",
+  function() {
+
+    document.getElementById(
+      "displacementDiscrete"
+    ).value =
+      "";
+
+
+    countDiscrete(
+      "displacementDiscrete",
+      "displacementDiscreteCount"
+    );
+
+  }
+);
+
+
+document.getElementById(
+  "clearVelocityDiscrete"
+).addEventListener(
+  "click",
+  function() {
+
+    document.getElementById(
+      "velocityDiscrete"
+    ).value =
+      "";
+
+
+    countDiscrete(
+      "velocityDiscrete",
+      "velocityDiscreteCount"
+    );
+
+  }
+);
+
+
+/* =========================================================
+   27. Discrete displacement example
+   ========================================================= */
+
+document.getElementById(
+  "exampleDisplacementDiscrete"
+).addEventListener(
+  "click",
+  function() {
+
+    const values = [];
+
+
+    const center =
+      0.30;
+
+
+    const sigma =
+      0.06;
+
+
+    for (
+      let i = 0;
+      i <= N;
+      i++
+    ) {
+
+      let value =
+        Math.exp(
+
+          -
+
+          Math.pow(
+            x[i] - center,
+            2
           )
-          .value === "discrete"
-      ) {
 
-        updateDisplacementUI();
+          /
 
-      }
-
-
-      if (
-        document
-          .getElementById(
-            "velocityType"
+          (
+            2
+            * sigma
+            * sigma
           )
-          .value === "discrete"
-      ) {
 
-        updateVelocityUI();
-
-      }
-
-
-      /*
-        Initialize only if current modes
-        don't require missing discrete data.
-      */
-
-      const displacementDiscrete =
-        document
-          .getElementById(
-            "displacementType"
-          )
-          .value === "discrete";
-
-
-      const velocityDiscrete =
-        document
-          .getElementById(
-            "velocityType"
-          )
-          .value === "discrete";
-
-
-      if (
-        !displacementDiscrete
-        &&
-        !velocityDiscrete
-      ) {
-
-        initializeWave();
-
-      }
-
-
-      else {
-
-        /*
-          draw empty state until correct
-          discrete values are entered.
-        */
-
-        time = 0;
-
-
-        uCurr =
-          new Array(
-            N + 1
-          ).fill(0);
-
-
-        drawWave();
-
-      }
-
-    }
-  );
-
-
-/* =========================================================
-   18. Main buttons
-   ========================================================= */
-
-document
-  .getElementById(
-    "playButton"
-  )
-  .addEventListener(
-    "click",
-    function() {
-
-      if (
-        !running
-      ) {
-
-        running =
-          true;
-
-
-        requestAnimationFrame(
-          animate
         );
 
-      }
-
-    }
-  );
-
-
-document
-  .getElementById(
-    "pauseButton"
-  )
-  .addEventListener(
-    "click",
-    function() {
-
-      running =
-        false;
-
-    }
-  );
-
-
-document
-  .getElementById(
-    "resetButton"
-  )
-  .addEventListener(
-    "click",
-    function() {
-
-      initializeWave();
-
-    }
-  );
-
-
-/* =========================================================
-   19. Displacement events
-   ========================================================= */
-
-document
-  .getElementById(
-    "displacementType"
-  )
-  .addEventListener(
-    "change",
-    function() {
-
-      running =
-        false;
-
-
-      updateDisplacementUI();
-
 
       if (
-        this.value !== "discrete"
+        i === 0
+        ||
+        i === N
       ) {
 
-        initializeWave();
+        value = 0;
 
       }
 
-    }
-  );
 
-
-document
-  .getElementById(
-    "applyDisplacementCustom"
-  )
-  .addEventListener(
-    "click",
-    initializeWave
-  );
-
-
-document
-  .getElementById(
-    "displacementCustom"
-  )
-  .addEventListener(
-    "keydown",
-    function(event) {
-
-      if (
-        event.key === "Enter"
-      ) {
-
-        initializeWave();
-
-      }
-
-    }
-  );
-
-
-document
-  .getElementById(
-    "displacementDiscrete"
-  )
-  .addEventListener(
-    "input",
-    function() {
-
-      countDiscrete(
-        "displacementDiscrete",
-        "displacementDiscreteCount"
+      values.push(
+        value.toFixed(8)
       );
 
     }
-  );
 
 
-document
-  .getElementById(
-    "applyDisplacementDiscrete"
-  )
-  .addEventListener(
-    "click",
-    initializeWave
-  );
+    document.getElementById(
+      "displacementDiscrete"
+    ).value =
+      values.join("\n");
 
 
-document
-  .getElementById(
-    "clearDisplacementDiscrete"
-  )
-  .addEventListener(
-    "click",
-    function() {
-
-      document
-        .getElementById(
-          "displacementDiscrete"
-        )
-        .value =
-          "";
+    countDiscrete(
+      "displacementDiscrete",
+      "displacementDiscreteCount"
+    );
 
 
-      countDiscrete(
-        "displacementDiscrete",
-        "displacementDiscreteCount"
-      );
+    initializeWave();
 
-    }
-  );
+  }
+);
 
 
 /* =========================================================
-   20. Displacement example
+   28. Discrete velocity example
    ========================================================= */
 
-document
-  .getElementById(
-    "exampleDisplacementDiscrete"
-  )
-  .addEventListener(
-    "click",
-    function() {
+document.getElementById(
+  "exampleVelocityDiscrete"
+).addEventListener(
+  "click",
+  function() {
 
-      const values = [];
+    const values = [];
 
 
-      const center =
-        0.30;
+    for (
+      let i = 0;
+      i <= N;
+      i++
+    ) {
 
-
-      const sigma =
-        0.06;
-
-
-      for (
-        let i = 0;
-        i <= N;
-        i++
-      ) {
-
-        let value =
-          Math.exp(
-
-            -
-
-            Math.pow(
-              x[i] - center,
-              2
-            )
-
-            /
-
-            (
-              2
-              * sigma
-              * sigma
-            )
-
-          );
-
-
-        if (
-          i === 0
-          ||
-          i === N
-        ) {
-
-          value =
-            0;
-
-        }
-
-
-        values.push(
-          value.toFixed(8)
+      let value =
+        Math.sin(
+          Math.PI
+          * x[i]
         );
 
-      }
-
-
-      document
-        .getElementById(
-          "displacementDiscrete"
-        )
-        .value =
-          values.join("\n");
-
-
-      countDiscrete(
-        "displacementDiscrete",
-        "displacementDiscreteCount"
-      );
-
-
-      initializeWave();
-
-    }
-  );
-
-
-/* =========================================================
-   21. Velocity events
-   ========================================================= */
-
-document
-  .getElementById(
-    "velocityType"
-  )
-  .addEventListener(
-    "change",
-    function() {
-
-      running =
-        false;
-
-
-      updateVelocityUI();
-
 
       if (
-        this.value !== "discrete"
+        i === 0
+        ||
+        i === N
       ) {
 
-        initializeWave();
+        value = 0;
 
       }
 
-    }
-  );
 
-
-document
-  .getElementById(
-    "applyVelocityCustom"
-  )
-  .addEventListener(
-    "click",
-    initializeWave
-  );
-
-
-document
-  .getElementById(
-    "velocityCustom"
-  )
-  .addEventListener(
-    "keydown",
-    function(event) {
-
-      if (
-        event.key === "Enter"
-      ) {
-
-        initializeWave();
-
-      }
-
-    }
-  );
-
-
-document
-  .getElementById(
-    "velocityDiscrete"
-  )
-  .addEventListener(
-    "input",
-    function() {
-
-      countDiscrete(
-        "velocityDiscrete",
-        "velocityDiscreteCount"
+      values.push(
+        value.toFixed(8)
       );
 
     }
-  );
 
 
-document
-  .getElementById(
-    "applyVelocityDiscrete"
-  )
-  .addEventListener(
-    "click",
-    initializeWave
-  );
+    document.getElementById(
+      "velocityDiscrete"
+    ).value =
+      values.join("\n");
 
 
-document
-  .getElementById(
-    "clearVelocityDiscrete"
-  )
-  .addEventListener(
-    "click",
-    function() {
-
-      document
-        .getElementById(
-          "velocityDiscrete"
-        )
-        .value =
-          "";
+    countDiscrete(
+      "velocityDiscrete",
+      "velocityDiscreteCount"
+    );
 
 
-      countDiscrete(
-        "velocityDiscrete",
-        "velocityDiscreteCount"
-      );
+    initializeWave();
 
-    }
-  );
+  }
+);
 
 
 /* =========================================================
-   22. Velocity example
-   ========================================================= */
-
-document
-  .getElementById(
-    "exampleVelocityDiscrete"
-  )
-  .addEventListener(
-    "click",
-    function() {
-
-      const values = [];
-
-
-      for (
-        let i = 0;
-        i <= N;
-        i++
-      ) {
-
-        let value =
-          Math.sin(
-            Math.PI
-            * x[i]
-          );
-
-
-        if (
-          i === 0
-          ||
-          i === N
-        ) {
-
-          value = 0;
-
-        }
-
-
-        values.push(
-          value.toFixed(8)
-        );
-
-      }
-
-
-      document
-        .getElementById(
-          "velocityDiscrete"
-        )
-        .value =
-          values.join("\n");
-
-
-      countDiscrete(
-        "velocityDiscrete",
-        "velocityDiscreteCount"
-      );
-
-
-      initializeWave();
-
-    }
-  );
-
-
-/* =========================================================
-   23. Start
+   29. Start
    ========================================================= */
 
 buildGrid();
@@ -4099,4 +4037,5 @@ initializeWave();
 </script>
 
 </body>
+
 </html>
