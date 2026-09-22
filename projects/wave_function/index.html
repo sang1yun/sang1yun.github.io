@@ -41,10 +41,8 @@
 
     canvas {
       display: block;
-
       width: 100%;
       height: auto;
-
       background: white;
       border: 1px solid #bbb;
     }
@@ -59,6 +57,14 @@
     select {
       padding: 7px;
       font-size: 14px;
+    }
+
+    input {
+      padding: 9px 10px;
+      font-size: 15px;
+      width: 100%;
+      box-sizing: border-box;
+      font-family: monospace;
     }
 
     .controls {
@@ -87,6 +93,49 @@
       font-size: 14px;
       line-height: 1.6;
     }
+
+    .custom-box {
+      margin-top: 16px;
+      padding: 15px;
+      background: #f6f8fa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .custom-label {
+      margin-bottom: 7px;
+      font-weight: bold;
+    }
+
+    .custom-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .custom-row button {
+      margin: 0;
+    }
+
+    .example-box {
+      margin-top: 12px;
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #555;
+    }
+
+    .error {
+      margin-top: 10px;
+      color: #cc0000;
+      font-family: monospace;
+      min-height: 18px;
+    }
+
+    .success {
+      color: #087a22;
+    }
   </style>
 </head>
 
@@ -100,9 +149,9 @@
   </div>
 
 
-  <!-- =========================
+  <!-- =====================================================
        Simulation
-       ========================= -->
+       ===================================================== -->
 
   <div class="panel">
 
@@ -145,9 +194,9 @@
   </div>
 
 
-  <!-- =========================
+  <!-- =====================================================
        Parameters
-       ========================= -->
+       ===================================================== -->
 
   <div class="panel">
 
@@ -181,9 +230,9 @@
   </div>
 
 
-  <!-- =========================
+  <!-- =====================================================
        Initial condition
-       ========================= -->
+       ===================================================== -->
 
   <div class="panel">
 
@@ -192,6 +241,7 @@
     <p>
       u(x, 0) = f(x)
     </p>
+
 
     <select id="initialCondition">
 
@@ -207,12 +257,68 @@
         Gaussian Pulse
       </option>
 
+      <option value="custom">
+        Custom Function
+      </option>
+
     </select>
+
 
     <p
       id="initialDescription"
       class="description">
     </p>
+
+
+    <!-- Custom function -->
+
+    <div
+      id="customBox"
+      class="custom-box">
+
+      <div class="custom-label">
+        Enter f(x)
+      </div>
+
+
+      <div class="custom-row">
+
+        <input
+          type="text"
+          id="customFunction"
+          value="sin(2*pi*x)"
+          placeholder="Example: sin(2*pi*x)">
+
+        <button id="applyCustomButton">
+          Apply
+        </button>
+
+      </div>
+
+
+      <div class="example-box">
+
+        Examples:<br>
+
+        sin(2*pi*x)<br>
+
+        0.5*sin(pi*x) + 0.3*sin(3*pi*x)<br>
+
+        exp(-100*(x-0.5)^2)<br>
+
+        x*(1-x)<br>
+
+        sin(pi*x)^2
+
+      </div>
+
+
+      <div
+        id="customError"
+        class="error">
+      </div>
+
+    </div>
 
   </div>
 
@@ -225,13 +331,17 @@
 
 const L = 1.0;
 
-/*
-  interval 개수
 
-  N = 100 이므로
-  node는 101개:
+/*
+  Number of intervals
+
+  N = 100
+
+  therefore nodes are
 
   x_0, x_1, ..., x_100
+
+  = 101 points
 */
 
 const N = 100;
@@ -240,18 +350,18 @@ const dx = L / N;
 
 
 /*
-  wave speed
+  Wave propagation speed
 */
 
 const c = 1.0;
 
 
 /*
-  CFL condition:
+  CFL condition
 
       c Δt / Δx <= 1
 
-  안정성을 위해 0.8 사용
+  We choose 0.8 for stability.
 */
 
 const CFL = 0.8;
@@ -266,6 +376,7 @@ const dt =
 
 const x =
   new Array(N + 1);
+
 
 for (
   let i = 0;
@@ -283,14 +394,6 @@ for (
    3. Wave arrays
    ========================================================= */
 
-/*
-  uPrev = u at previous time
-
-  uCurr = u at current time
-
-  uNext = u at next time
-*/
-
 let uPrev =
   new Array(N + 1).fill(0);
 
@@ -301,40 +404,708 @@ let uNext =
   new Array(N + 1).fill(0);
 
 
-/*
-  simulation time
-*/
-
 let time = 0;
-
-
-/*
-  첫 time step인지 여부
-
-  t = 0에서는
-  initial velocity를 이용한 별도 공식이 필요하다.
-*/
 
 let firstStepPending = true;
 
 
 /* =========================================================
-   4. Initial condition
+   4. Custom mathematical expression parser
    ========================================================= */
 
-function initialFunction(xValue) {
+
+/*
+  Supported:
+
+  numbers
+
+  x
+
+  pi
+  e
+
+  +
+  -
+  *
+  /
+  ^
+
+  parentheses
+
+  sin()
+  cos()
+  tan()
+  exp()
+  sqrt()
+  abs()
+  log()
+*/
+
+
+function tokenize(expression) {
+
+  const tokens = [];
+
+  let i = 0;
+
+
+  while (
+    i < expression.length
+  ) {
+
+    const char =
+      expression[i];
+
+
+    /*
+      Ignore spaces
+    */
+
+    if (
+      /\s/.test(char)
+    ) {
+
+      i++;
+
+      continue;
+
+    }
+
+
+    /*
+      Number
+    */
+
+    if (
+      /[0-9.]/.test(char)
+    ) {
+
+      let numberString = "";
+
+      let dotCount = 0;
+
+
+      while (
+        i < expression.length
+        &&
+        /[0-9.]/.test(
+          expression[i]
+        )
+      ) {
+
+        if (
+          expression[i] === "."
+        ) {
+
+          dotCount++;
+
+        }
+
+
+        if (
+          dotCount > 1
+        ) {
+
+          throw new Error(
+            "Invalid number."
+          );
+
+        }
+
+
+        numberString +=
+          expression[i];
+
+        i++;
+
+      }
+
+
+      const value =
+        Number(numberString);
+
+
+      if (
+        !Number.isFinite(value)
+      ) {
+
+        throw new Error(
+          "Invalid number."
+        );
+
+      }
+
+
+      tokens.push({
+        type: "number",
+        value: value
+      });
+
+
+      continue;
+
+    }
+
+
+    /*
+      Variable / function / constant
+    */
+
+    if (
+      /[a-zA-Z]/.test(char)
+    ) {
+
+      let word = "";
+
+
+      while (
+        i < expression.length
+        &&
+        /[a-zA-Z]/.test(
+          expression[i]
+        )
+      ) {
+
+        word +=
+          expression[i];
+
+        i++;
+
+      }
+
+
+      word =
+        word.toLowerCase();
+
+
+      tokens.push({
+        type: "identifier",
+        value: word
+      });
+
+
+      continue;
+
+    }
+
+
+    /*
+      Operators
+    */
+
+    if (
+      "+-*/^()".includes(char)
+    ) {
+
+      tokens.push({
+        type: char
+      });
+
+      i++;
+
+      continue;
+
+    }
+
+
+    throw new Error(
+      "Unsupported character: "
+      + char
+    );
+
+  }
+
+
+  return tokens;
+
+}
+
+
+/* =========================================================
+   Recursive descent parser
+   ========================================================= */
+
+function evaluateExpression(
+  expression,
+  xValue
+) {
+
+  const tokens =
+    tokenize(expression);
+
+
+  let position = 0;
+
+
+  function currentToken() {
+
+    return tokens[position];
+
+  }
+
+
+  function consume(type) {
+
+    if (
+      currentToken()
+      &&
+      currentToken().type === type
+    ) {
+
+      position++;
+
+      return true;
+
+    }
+
+
+    return false;
+
+  }
+
+
+  /*
+    expression:
+
+    term
+    + term
+    - term
+  */
+
+  function parseExpression() {
+
+    let value =
+      parseTerm();
+
+
+    while (
+      position < tokens.length
+    ) {
+
+      if (
+        consume("+")
+      ) {
+
+        value +=
+          parseTerm();
+
+      }
+
+      else if (
+        consume("-")
+      ) {
+
+        value -=
+          parseTerm();
+
+      }
+
+      else {
+
+        break;
+
+      }
+
+    }
+
+
+    return value;
+
+  }
+
+
+  /*
+    multiplication / division
+  */
+
+  function parseTerm() {
+
+    let value =
+      parseUnary();
+
+
+    while (
+      position < tokens.length
+    ) {
+
+      if (
+        consume("*")
+      ) {
+
+        value *=
+          parseUnary();
+
+      }
+
+      else if (
+        consume("/")
+      ) {
+
+        const denominator =
+          parseUnary();
+
+
+        if (
+          Math.abs(denominator)
+          < 1e-14
+        ) {
+
+          throw new Error(
+            "Division by zero."
+          );
+
+        }
+
+
+        value /=
+          denominator;
+
+      }
+
+      else {
+
+        break;
+
+      }
+
+    }
+
+
+    return value;
+
+  }
+
+
+  /*
+    Unary + and -
+  */
+
+  function parseUnary() {
+
+    if (
+      consume("+")
+    ) {
+
+      return parseUnary();
+
+    }
+
+
+    if (
+      consume("-")
+    ) {
+
+      return -parseUnary();
+
+    }
+
+
+    return parsePower();
+
+  }
+
+
+  /*
+    Exponentiation
+  */
+
+  function parsePower() {
+
+    let base =
+      parsePrimary();
+
+
+    if (
+      consume("^")
+    ) {
+
+      const exponent =
+        parseUnary();
+
+
+      base =
+        Math.pow(
+          base,
+          exponent
+        );
+
+    }
+
+
+    return base;
+
+  }
+
+
+  /*
+    Numbers
+
+    x
+
+    constants
+
+    functions
+
+    parentheses
+  */
+
+  function parsePrimary() {
+
+    const token =
+      currentToken();
+
+
+    if (
+      !token
+    ) {
+
+      throw new Error(
+        "Unexpected end of expression."
+      );
+
+    }
+
+
+    /*
+      Number
+    */
+
+    if (
+      token.type === "number"
+    ) {
+
+      position++;
+
+      return token.value;
+
+    }
+
+
+    /*
+      Parentheses
+    */
+
+    if (
+      consume("(")
+    ) {
+
+      const value =
+        parseExpression();
+
+
+      if (
+        !consume(")")
+      ) {
+
+        throw new Error(
+          "Missing closing parenthesis."
+        );
+
+      }
+
+
+      return value;
+
+    }
+
+
+    /*
+      Identifier
+    */
+
+    if (
+      token.type === "identifier"
+    ) {
+
+      position++;
+
+      const name =
+        token.value;
+
+
+      /*
+        variable x
+      */
+
+      if (
+        name === "x"
+      ) {
+
+        return xValue;
+
+      }
+
+
+      /*
+        constants
+      */
+
+      if (
+        name === "pi"
+      ) {
+
+        return Math.PI;
+
+      }
+
+
+      if (
+        name === "e"
+      ) {
+
+        return Math.E;
+
+      }
+
+
+      /*
+        Mathematical functions
+      */
+
+      const allowedFunctions = {
+
+        sin:
+          Math.sin,
+
+        cos:
+          Math.cos,
+
+        tan:
+          Math.tan,
+
+        exp:
+          Math.exp,
+
+        sqrt:
+          Math.sqrt,
+
+        abs:
+          Math.abs,
+
+        log:
+          Math.log
+
+      };
+
+
+      if (
+        name in allowedFunctions
+      ) {
+
+        if (
+          !consume("(")
+        ) {
+
+          throw new Error(
+            name
+            + " must be followed by (...)."
+          );
+
+        }
+
+
+        const argument =
+          parseExpression();
+
+
+        if (
+          !consume(")")
+        ) {
+
+          throw new Error(
+            "Missing closing parenthesis."
+          );
+
+        }
+
+
+        const result =
+          allowedFunctions[name](
+            argument
+          );
+
+
+        if (
+          !Number.isFinite(result)
+        ) {
+
+          throw new Error(
+            "Function produced an invalid value."
+          );
+
+        }
+
+
+        return result;
+
+      }
+
+
+      throw new Error(
+        "Unknown symbol: "
+        + name
+      );
+
+    }
+
+
+    throw new Error(
+      "Unexpected token."
+    );
+
+  }
+
+
+  const result =
+    parseExpression();
+
+
+  if (
+    position !== tokens.length
+  ) {
+
+    throw new Error(
+      "Unexpected part of expression."
+    );
+
+  }
+
+
+  if (
+    !Number.isFinite(result)
+  ) {
+
+    throw new Error(
+      "Expression produced an invalid value."
+    );
+
+  }
+
+
+  return result;
+
+}
+
+
+/* =========================================================
+   5. Initial condition
+   ========================================================= */
+
+function initialFunction(
+  xValue
+) {
 
   const type =
     document
-    .getElementById(
-      "initialCondition"
-    )
-    .value;
+      .getElementById(
+        "initialCondition"
+      )
+      .value;
 
 
-  /* -----------------------------------------
+  /* ---------------------------------------------------------
      1. Sine
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
   if (
     type === "sine"
@@ -347,9 +1118,9 @@ function initialFunction(xValue) {
   }
 
 
-  /* -----------------------------------------
+  /* ---------------------------------------------------------
      2. Plucked string
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
   if (
     type === "pluck"
@@ -365,7 +1136,9 @@ function initialFunction(xValue) {
     ) {
 
       return (
-        A * xValue / x0
+        A
+        * xValue
+        / x0
       );
 
     }
@@ -383,9 +1156,9 @@ function initialFunction(xValue) {
   }
 
 
-  /* -----------------------------------------
+  /* ---------------------------------------------------------
      3. Gaussian pulse
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
   if (
     type === "gaussian"
@@ -399,15 +1172,22 @@ function initialFunction(xValue) {
 
 
     return (
-      A
-      * Math.exp(
 
-        - Math.pow(
-            xValue - x0,
-            2
-          )
+      A
+
+      *
+
+      Math.exp(
+
+        -
+
+        Math.pow(
+          xValue - x0,
+          2
+        )
 
         /
+
         (
           2
           * sigma
@@ -415,6 +1195,31 @@ function initialFunction(xValue) {
         )
 
       )
+
+    );
+
+  }
+
+
+  /* ---------------------------------------------------------
+     4. Custom function
+     --------------------------------------------------------- */
+
+  if (
+    type === "custom"
+  ) {
+
+    const expression =
+      document
+        .getElementById(
+          "customFunction"
+        )
+        .value;
+
+
+    return evaluateExpression(
+      expression,
+      xValue
     );
 
   }
@@ -426,23 +1231,31 @@ function initialFunction(xValue) {
 
 
 /* =========================================================
-   5. Initial condition description
+   6. Initial condition UI
    ========================================================= */
 
 function updateDescription() {
 
   const type =
     document
-    .getElementById(
-      "initialCondition"
-    )
-    .value;
+      .getElementById(
+        "initialCondition"
+      )
+      .value;
+
 
   const description =
     document
-    .getElementById(
-      "initialDescription"
-    );
+      .getElementById(
+        "initialDescription"
+      );
+
+
+  const customBox =
+    document
+      .getElementById(
+        "customBox"
+      );
 
 
   if (
@@ -452,25 +1265,47 @@ function updateDescription() {
     description.textContent =
       "Initial displacement: f(x) = sin(πx), initial velocity: g(x) = 0";
 
+    customBox.style.display =
+      "none";
+
   }
 
 
-  if (
+  else if (
     type === "pluck"
   ) {
 
     description.textContent =
       "Triangular initial displacement with peak at x = 0.35, initial velocity: g(x) = 0";
 
+    customBox.style.display =
+      "none";
+
   }
 
 
-  if (
+  else if (
     type === "gaussian"
   ) {
 
     description.textContent =
       "Gaussian initial displacement centered at x = 0.5, initial velocity: g(x) = 0";
+
+    customBox.style.display =
+      "none";
+
+  }
+
+
+  else if (
+    type === "custom"
+  ) {
+
+    description.textContent =
+      "Enter a mathematical expression for the initial displacement f(x). Initial velocity: g(x) = 0";
+
+    customBox.style.display =
+      "block";
 
   }
 
@@ -478,7 +1313,7 @@ function updateDescription() {
 
 
 /* =========================================================
-   6. Initialize simulation
+   7. Initialize simulation
    ========================================================= */
 
 function initializeWave() {
@@ -488,68 +1323,116 @@ function initializeWave() {
   firstStepPending = true;
 
 
-  /*
-    initial displacement
-
-        u(x,0) = f(x)
-  */
-
-  for (
-    let i = 0;
-    i <= N;
-    i++
-  ) {
-
-    uCurr[i] =
-      initialFunction(
-        x[i]
+  const errorDisplay =
+    document
+      .getElementById(
+        "customError"
       );
+
+
+  errorDisplay.textContent =
+    "";
+
+  errorDisplay.className =
+    "error";
+
+
+  try {
+
+    /*
+      Initial displacement
+
+      u(x,0) = f(x)
+    */
+
+    for (
+      let i = 0;
+      i <= N;
+      i++
+    ) {
+
+      uCurr[i] =
+        initialFunction(
+          x[i]
+        );
+
+    }
+
+
+    /*
+      Fixed boundary conditions
+
+      u(0,t) = 0
+
+      u(L,t) = 0
+    */
+
+    uCurr[0] = 0;
+
+    uCurr[N] = 0;
+
+
+    uPrev =
+      [...uCurr];
+
+
+    uNext =
+      new Array(
+        N + 1
+      ).fill(0);
+
+
+    document
+      .getElementById(
+        "timeDisplay"
+      )
+      .textContent =
+        time.toFixed(3);
+
+
+    updateDescription();
+
+    drawWave();
+
+
+    if (
+      document
+        .getElementById(
+          "initialCondition"
+        )
+        .value
+      === "custom"
+    ) {
+
+      errorDisplay.textContent =
+        "Function applied successfully.";
+
+      errorDisplay.className =
+        "error success";
+
+    }
 
   }
 
 
-  /*
-    Fixed boundary condition
+  catch (
+    error
+  ) {
 
-        u(0,t) = 0
-        u(L,t) = 0
-  */
-
-  uCurr[0] = 0;
-
-  uCurr[N] = 0;
+    running = false;
 
 
-  /*
-    이전 배열도 현재 초기상태로 초기화
-  */
+    errorDisplay.textContent =
+      "Error: "
+      + error.message;
 
-  uPrev =
-    [...uCurr];
-
-  uNext =
-    new Array(
-      N + 1
-    ).fill(0);
-
-
-  document
-    .getElementById(
-      "timeDisplay"
-    )
-    .textContent =
-      time.toFixed(3);
-
-
-  updateDescription();
-
-  drawWave();
+  }
 
 }
 
 
 /* =========================================================
-   7. Numerical solver
+   8. Numerical solver
    ========================================================= */
 
 function updateWave() {
@@ -559,21 +1442,18 @@ function updateWave() {
 
 
   /*
-    첫 번째 time step
+    First time step
 
-    Taylor expansion:
+    u_i^1
 
-    u_i^1 =
-      u_i^0
-      + Δt g_i
-      + 1/2 r²
-        (u_{i+1}^0
-        - 2u_i^0
-        + u_{i-1}^0)
+    = u_i^0
+    + Δt g_i
+    + 1/2 r²
+      (u_{i+1}^0 - 2u_i^0 + u_{i-1}^0)
 
-    현재는
+    Here
 
-      g(x) = 0
+    g(x) = 0
   */
 
   if (
@@ -597,9 +1477,13 @@ function updateWave() {
         * r
 
         *
+
         (
           uCurr[i + 1]
-          - 2 * uCurr[i]
+
+          - 2
+          * uCurr[i]
+
           + uCurr[i - 1]
         );
 
@@ -618,9 +1502,13 @@ function updateWave() {
       [...uNext];
 
 
-    firstStepPending = false;
+    firstStepPending =
+      false;
 
-    time = dt;
+
+    time =
+      dt;
+
 
     return;
 
@@ -628,20 +1516,22 @@ function updateWave() {
 
 
   /*
-    일반적인 finite difference update
+    Standard finite difference update
 
-    u_i^{n+1}
+    u_i^(n+1)
 
     =
+
     2u_i^n
-    - u_i^{n-1}
+    - u_i^(n-1)
 
     +
+
     r²
     (
-      u_{i+1}^n
+      u_(i+1)^n
       - 2u_i^n
-      + u_{i-1}^n
+      + u_(i-1)^n
     )
   */
 
@@ -653,9 +1543,12 @@ function updateWave() {
 
     uNext[i] =
 
-      2 * uCurr[i]
+      2
+      * uCurr[i]
 
-      - uPrev[i]
+      -
+
+      uPrev[i]
 
       +
 
@@ -663,9 +1556,13 @@ function updateWave() {
       * r
 
       *
+
       (
         uCurr[i + 1]
-        - 2 * uCurr[i]
+
+        - 2
+        * uCurr[i]
+
         + uCurr[i - 1]
       );
 
@@ -673,7 +1570,7 @@ function updateWave() {
 
 
   /*
-    fixed endpoints
+    Fixed endpoints
   */
 
   uNext[0] = 0;
@@ -682,7 +1579,7 @@ function updateWave() {
 
 
   /*
-    advance time
+    Advance time
   */
 
   uPrev =
@@ -692,30 +1589,32 @@ function updateWave() {
     [...uNext];
 
 
-  time += dt;
+  time +=
+    dt;
 
 }
 
 
 /* =========================================================
-   8. Canvas
+   9. Canvas
    ========================================================= */
 
 const canvas =
   document
-  .getElementById(
-    "waveCanvas"
-  );
+    .getElementById(
+      "waveCanvas"
+    );
+
 
 const ctx =
   canvas
-  .getContext(
-    "2d"
-  );
+    .getContext(
+      "2d"
+    );
 
 
 /* =========================================================
-   9. Draw graph
+   10. Draw graph
    ========================================================= */
 
 function drawWave() {
@@ -727,10 +1626,6 @@ function drawWave() {
     canvas.height;
 
 
-  /*
-    clear canvas
-  */
-
   ctx.clearRect(
     0,
     0,
@@ -739,17 +1634,21 @@ function drawWave() {
   );
 
 
-  /* -----------------------------------------
+  /* ---------------------------------------------------------
      Plot dimensions
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
-  const marginLeft = 65;
+  const marginLeft =
+    65;
 
-  const marginRight = 30;
+  const marginRight =
+    30;
 
-  const marginTop = 30;
+  const marginTop =
+    30;
 
-  const marginBottom = 55;
+  const marginBottom =
+    55;
 
 
   const plotWidth =
@@ -765,27 +1664,73 @@ function drawWave() {
 
 
   /*
-    fixed y-axis range
+    Dynamic y-axis range
+
+    기본 범위는 ±1.2이고
+    custom function이 더 크면 자동 확장
   */
 
-  const yMin = -1.2;
+  let maxAmplitude =
+    1;
 
-  const yMax = 1.2;
+
+  for (
+    let i = 0;
+    i <= N;
+    i++
+  ) {
+
+    if (
+      Number.isFinite(
+        uCurr[i]
+      )
+    ) {
+
+      maxAmplitude =
+        Math.max(
+          maxAmplitude,
+          Math.abs(
+            uCurr[i]
+          )
+        );
+
+    }
+
+  }
 
 
-  /* -----------------------------------------
+  const yRange =
+    Math.max(
+      1.2,
+      maxAmplitude * 1.2
+    );
+
+
+  const yMin =
+    -yRange;
+
+  const yMax =
+    yRange;
+
+
+  /* ---------------------------------------------------------
      Coordinate transform
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
   function xToPixel(
     xValue
   ) {
 
     return (
+
       marginLeft
+
       +
+
       (xValue / L)
+
       * plotWidth
+
     );
 
   }
@@ -796,6 +1741,7 @@ function drawWave() {
   ) {
 
     return (
+
       marginTop
 
       +
@@ -805,23 +1751,27 @@ function drawWave() {
       )
 
       /
+
       (
         yMax - yMin
       )
 
       *
+
       plotHeight
+
     );
 
   }
 
 
-  /* -----------------------------------------
+  /* ---------------------------------------------------------
      Plot background
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
   ctx.fillStyle =
     "#ffffff";
+
 
   ctx.fillRect(
     marginLeft,
@@ -831,14 +1781,15 @@ function drawWave() {
   );
 
 
-  /* -----------------------------------------
+  /* ---------------------------------------------------------
      Vertical grid
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
   ctx.strokeStyle =
     "#e6e6e6";
 
-  ctx.lineWidth = 1;
+  ctx.lineWidth =
+    1;
 
 
   for (
@@ -849,6 +1800,7 @@ function drawWave() {
 
     const xValue =
       j / 10;
+
 
     const px =
       xToPixel(
@@ -865,8 +1817,7 @@ function drawWave() {
 
     ctx.lineTo(
       px,
-      marginTop
-      + plotHeight
+      marginTop + plotHeight
     );
 
     ctx.stroke();
@@ -874,16 +1825,22 @@ function drawWave() {
   }
 
 
-  /* -----------------------------------------
+  /* ---------------------------------------------------------
      Horizontal grid
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
   const yTicks = [
-    -1.0,
-    -0.5,
+
+    -yRange,
+
+    -yRange / 2,
+
     0,
-    0.5,
-    1.0
+
+    yRange / 2,
+
+    yRange
+
   ];
 
 
@@ -906,8 +1863,7 @@ function drawWave() {
     );
 
     ctx.lineTo(
-      marginLeft
-      + plotWidth,
+      marginLeft + plotWidth,
       py
     );
 
@@ -916,14 +1872,16 @@ function drawWave() {
   }
 
 
-  /* -----------------------------------------
-     Plot border
-     ----------------------------------------- */
+  /* ---------------------------------------------------------
+     Border
+     --------------------------------------------------------- */
 
   ctx.strokeStyle =
     "#777";
 
-  ctx.lineWidth = 1;
+  ctx.lineWidth =
+    1;
+
 
   ctx.strokeRect(
     marginLeft,
@@ -933,9 +1891,9 @@ function drawWave() {
   );
 
 
-  /* -----------------------------------------
-     x axis, u = 0
-     ----------------------------------------- */
+  /* ---------------------------------------------------------
+     x axis = u = 0
+     --------------------------------------------------------- */
 
   const zeroY =
     yToPixel(0);
@@ -944,27 +1902,31 @@ function drawWave() {
   ctx.strokeStyle =
     "#555";
 
-  ctx.lineWidth = 1.4;
+  ctx.lineWidth =
+    1.4;
+
 
   ctx.beginPath();
+
 
   ctx.moveTo(
     marginLeft,
     zeroY
   );
 
+
   ctx.lineTo(
-    marginLeft
-    + plotWidth,
+    marginLeft + plotWidth,
     zeroY
   );
+
 
   ctx.stroke();
 
 
-  /* -----------------------------------------
+  /* ---------------------------------------------------------
      x tick labels
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
   ctx.fillStyle =
     "#333";
@@ -988,6 +1950,7 @@ function drawWave() {
     const xValue =
       j / 10;
 
+
     const px =
       xToPixel(
         xValue
@@ -1005,9 +1968,9 @@ function drawWave() {
   }
 
 
-  /* -----------------------------------------
+  /* ---------------------------------------------------------
      y tick labels
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
   ctx.textAlign =
     "right";
@@ -1028,7 +1991,7 @@ function drawWave() {
 
 
     ctx.fillText(
-      yValue.toFixed(1),
+      yValue.toFixed(2),
       marginLeft - 9,
       py
     );
@@ -1036,9 +1999,9 @@ function drawWave() {
   }
 
 
-  /* -----------------------------------------
+  /* ---------------------------------------------------------
      Axis titles
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
   ctx.fillStyle =
     "#111";
@@ -1046,10 +2009,6 @@ function drawWave() {
   ctx.font =
     "15px Arial";
 
-
-  /*
-    x
-  */
 
   ctx.textAlign =
     "center";
@@ -1066,11 +2025,8 @@ function drawWave() {
   );
 
 
-  /*
-    u(x,t)
-  */
-
   ctx.save();
+
 
   ctx.translate(
     18,
@@ -1078,9 +2034,11 @@ function drawWave() {
     + plotHeight / 2
   );
 
+
   ctx.rotate(
     -Math.PI / 2
   );
+
 
   ctx.textAlign =
     "center";
@@ -1088,23 +2046,27 @@ function drawWave() {
   ctx.textBaseline =
     "middle";
 
+
   ctx.fillText(
     "u(x,t)",
     0,
     0
   );
 
+
   ctx.restore();
 
 
-  /* -----------------------------------------
+  /* ---------------------------------------------------------
      Wave
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
   ctx.strokeStyle =
     "#0066cc";
 
-  ctx.lineWidth = 3;
+  ctx.lineWidth =
+    3;
+
 
   ctx.beginPath();
 
@@ -1119,6 +2081,7 @@ function drawWave() {
       xToPixel(
         x[i]
       );
+
 
     const py =
       yToPixel(
@@ -1152,9 +2115,9 @@ function drawWave() {
   ctx.stroke();
 
 
-  /* -----------------------------------------
+  /* ---------------------------------------------------------
      Fixed boundary points
-     ----------------------------------------- */
+     --------------------------------------------------------- */
 
   ctx.fillStyle =
     "#d00000";
@@ -1166,6 +2129,7 @@ function drawWave() {
 
   ctx.beginPath();
 
+
   ctx.arc(
     xToPixel(0),
     yToPixel(0),
@@ -1173,6 +2137,7 @@ function drawWave() {
     0,
     2 * Math.PI
   );
+
 
   ctx.fill();
 
@@ -1183,6 +2148,7 @@ function drawWave() {
 
   ctx.beginPath();
 
+
   ctx.arc(
     xToPixel(L),
     yToPixel(0),
@@ -1191,26 +2157,27 @@ function drawWave() {
     2 * Math.PI
   );
 
+
   ctx.fill();
 
 }
 
 
 /* =========================================================
-   10. Animation
+   11. Animation
    ========================================================= */
 
-let running = false;
+let running =
+  false;
 
 
 /*
-  한 화면 frame마다
-  numerical time step을 몇 번 진행할지
-
-  너무 빠르면 1로 줄이면 된다.
+  Number of numerical time steps
+  performed for each screen frame.
 */
 
-const stepsPerFrame = 2;
+const stepsPerFrame =
+  2;
 
 
 function animate() {
@@ -1254,7 +2221,7 @@ function animate() {
 
 
 /* =========================================================
-   11. Buttons
+   12. Play / Pause / Reset
    ========================================================= */
 
 document
@@ -1269,7 +2236,9 @@ document
         !running
       ) {
 
-        running = true;
+        running =
+          true;
+
 
         requestAnimationFrame(
           animate
@@ -1289,7 +2258,8 @@ document
     "click",
     function () {
 
-      running = false;
+      running =
+        false;
 
     }
   );
@@ -1303,7 +2273,8 @@ document
     "click",
     function () {
 
-      running = false;
+      running =
+        false;
 
       initializeWave();
 
@@ -1312,7 +2283,7 @@ document
 
 
 /* =========================================================
-   12. Initial condition selector
+   13. Initial condition selector
    ========================================================= */
 
 document
@@ -1323,7 +2294,12 @@ document
     "change",
     function () {
 
-      running = false;
+      running =
+        false;
+
+
+      updateDescription();
+
 
       initializeWave();
 
@@ -1332,7 +2308,59 @@ document
 
 
 /* =========================================================
-   13. Parameter display
+   14. Apply custom function
+   ========================================================= */
+
+document
+  .getElementById(
+    "applyCustomButton"
+  )
+  .addEventListener(
+    "click",
+    function () {
+
+      running =
+        false;
+
+
+      initializeWave();
+
+    }
+  );
+
+
+/*
+  Enter key also applies function
+*/
+
+document
+  .getElementById(
+    "customFunction"
+  )
+  .addEventListener(
+    "keydown",
+    function (
+      event
+    ) {
+
+      if (
+        event.key === "Enter"
+      ) {
+
+        running =
+          false;
+
+
+        initializeWave();
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   15. Parameter display
    ========================================================= */
 
 document
@@ -1380,21 +2408,25 @@ document
     "cflDisplay"
   )
   .textContent =
+
     (
       c * dt / dx
     ).toFixed(3)
+
     +
+
     " ✓ Stable";
 
 
 /* =========================================================
-   14. Start
+   16. Start
    ========================================================= */
+
+updateDescription();
 
 initializeWave();
 
 </script>
 
 </body>
-
 </html>
