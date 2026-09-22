@@ -26,10 +26,15 @@
       margin-top: 0;
     }
 
+    h3 {
+      margin-top: 0;
+    }
+
     .equation {
       text-align: center;
       font-size: 20px;
       margin-bottom: 22px;
+      line-height: 1.6;
     }
 
     .panel {
@@ -69,7 +74,7 @@
 
     textarea {
       width: 100%;
-      min-height: 160px;
+      min-height: 150px;
       padding: 10px;
       box-sizing: border-box;
       resize: vertical;
@@ -90,7 +95,7 @@
 
     .parameter-grid {
       display: grid;
-      grid-template-columns: 170px 150px;
+      grid-template-columns: 180px 160px;
       gap: 8px;
       font-family: monospace;
     }
@@ -103,6 +108,12 @@
       color: #555;
       font-size: 14px;
       line-height: 1.6;
+    }
+
+    .input-section {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid #ddd;
     }
 
     .input-box {
@@ -148,27 +159,26 @@
       color: #087a22;
     }
 
-    .discrete-controls {
-      margin-top: 10px;
-    }
-
-    .discrete-info {
-      margin-top: 8px;
-      font-size: 13px;
-      color: #555;
-      line-height: 1.6;
-    }
-
     .counter {
       font-family: monospace;
       margin-top: 8px;
       font-size: 14px;
     }
 
-    code {
-      background: #eee;
-      padding: 2px 5px;
-      border-radius: 4px;
+    .info {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .preset-note {
+      margin-top: 12px;
+      padding: 10px;
+      background: #fff8dc;
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.6;
     }
   </style>
 </head>
@@ -180,6 +190,10 @@
 
   <div class="equation">
     ∂²u/∂t² = c² ∂²u/∂x²
+    <br>
+    u(x,0) = f(x),
+    &nbsp;
+    ∂u/∂t(x,0) = g(x)
   </div>
 
 
@@ -197,7 +211,6 @@
       height="440">
     </canvas>
 
-
     <div class="controls">
 
       <button id="playButton">
@@ -213,7 +226,6 @@
       </button>
 
     </div>
-
 
     <div class="status">
 
@@ -241,10 +253,10 @@
       <div>L</div>
       <div id="LDisplay"></div>
 
-      <div>N</div>
+      <div>N intervals</div>
       <div id="NDisplay"></div>
 
-      <div>Number of nodes</div>
+      <div>Grid nodes</div>
       <div id="nodeDisplay"></div>
 
       <div>Δx</div>
@@ -268,172 +280,300 @@
 
 
   <!-- =====================================================
-       Initial Condition
+       Initial Conditions
        ===================================================== -->
 
   <div class="panel">
 
-    <h2>Initial Condition</h2>
-
-    <p>
-      u(x, 0) = f(x)
-    </p>
-
-
-    <select id="initialCondition">
-
-      <option value="sine">
-        sin(πx)
-      </option>
-
-      <option value="pluck">
-        Plucked String
-      </option>
-
-      <option value="gaussian">
-        Gaussian Pulse
-      </option>
-
-      <option value="custom">
-        Custom Function
-      </option>
-
-      <option value="discrete">
-        Discrete Samples
-      </option>
-
-    </select>
-
-
-    <p
-      id="initialDescription"
-      class="description">
-    </p>
+    <h2>Initial Conditions</h2>
 
 
     <!-- ===================================================
-         Custom Function
+         Initial displacement
          =================================================== -->
 
-    <div
-      id="customBox"
-      class="input-box">
+    <div>
 
-      <div class="input-label">
-        Enter f(x)
-      </div>
+      <h3>1. Initial Displacement</h3>
+
+      <p>
+        u(x,0) = f(x)
+      </p>
+
+      <select id="displacementType">
+
+        <option value="sine">
+          sin(πx)
+        </option>
+
+        <option value="pluck">
+          Plucked String
+        </option>
+
+        <option value="gaussian">
+          Gaussian Pulse
+        </option>
+
+        <option value="custom">
+          Custom Function
+        </option>
+
+        <option value="discrete">
+          Discrete Samples
+        </option>
+
+      </select>
+
+      <p
+        id="displacementDescription"
+        class="description">
+      </p>
 
 
-      <div class="custom-row">
-
-        <input
-          type="text"
-          id="customFunction"
-          value="sin(2*pi*x)"
-          placeholder="Example: sin(2*pi*x)">
-
-        <button id="applyCustomButton">
-          Apply
-        </button>
-
-      </div>
-
-
-      <div class="example-box">
-
-        Examples:<br><br>
-
-        sin(2*pi*x)<br>
-
-        0.5*sin(pi*x) + 0.3*sin(3*pi*x)<br>
-
-        exp(-100*(x-0.5)^2)<br>
-
-        x*(1-x)<br>
-
-        sin(pi*x)^2
-
-      </div>
-
+      <!-- Custom displacement -->
 
       <div
-        id="customError"
-        class="error">
+        id="displacementCustomBox"
+        class="input-box">
+
+        <div class="input-label">
+          Enter f(x)
+        </div>
+
+        <div class="custom-row">
+
+          <input
+            type="text"
+            id="displacementCustom"
+            value="sin(2*pi*x)"
+            placeholder="sin(2*pi*x)">
+
+          <button id="applyDisplacementCustom">
+            Apply
+          </button>
+
+        </div>
+
+        <div class="example-box">
+          Examples:<br><br>
+          sin(2*pi*x)<br>
+          0.5*sin(pi*x) + 0.3*sin(3*pi*x)<br>
+          exp(-100*(x-0.5)^2)<br>
+          x*(1-x)
+        </div>
+
+        <div
+          id="displacementCustomError"
+          class="error">
+        </div>
+
+      </div>
+
+
+      <!-- Discrete displacement -->
+
+      <div
+        id="displacementDiscreteBox"
+        class="input-box">
+
+        <div class="input-label">
+          Enter 101 displacement values
+        </div>
+
+        <textarea
+          id="displacementDiscrete"
+          placeholder="Paste 101 values from Excel, separated by lines, spaces, or commas."></textarea>
+
+        <div class="counter">
+          Detected values:
+          <span id="displacementDiscreteCount">
+            0
+          </span>
+          / 101
+        </div>
+
+        <div class="controls">
+
+          <button id="applyDisplacementDiscrete">
+            Apply
+          </button>
+
+          <button id="exampleDisplacementDiscrete">
+            Load Example
+          </button>
+
+          <button id="clearDisplacementDiscrete">
+            Clear
+          </button>
+
+        </div>
+
+        <div class="info">
+          Grid:
+          x = 0.00, 0.01, 0.02, ..., 0.99, 1.00
+          <br>
+          Fixed boundaries force the first and last displacement values to zero.
+        </div>
+
+        <div
+          id="displacementDiscreteError"
+          class="error">
+        </div>
+
       </div>
 
     </div>
 
 
     <!-- ===================================================
-         Discrete Input
+         Initial velocity
          =================================================== -->
 
-    <div
-      id="discreteBox"
-      class="input-box">
+    <div class="input-section">
 
-      <div class="input-label">
-        Enter 101 discrete values
+      <h3>2. Initial Velocity</h3>
+
+      <p>
+        ∂u/∂t(x,0) = g(x)
+      </p>
+
+      <select id="velocityType">
+
+        <option value="zero">
+          Zero Velocity
+        </option>
+
+        <option value="custom">
+          Custom Function
+        </option>
+
+        <option value="discrete">
+          Discrete Samples
+        </option>
+
+        <option value="rightGaussian">
+          Right-moving Gaussian Example
+        </option>
+
+      </select>
+
+
+      <p
+        id="velocityDescription"
+        class="description">
+      </p>
+
+
+      <!-- Custom velocity -->
+
+      <div
+        id="velocityCustomBox"
+        class="input-box">
+
+        <div class="input-label">
+          Enter g(x)
+        </div>
+
+        <div class="custom-row">
+
+          <input
+            type="text"
+            id="velocityCustom"
+            value="0"
+            placeholder="Example: sin(pi*x)">
+
+          <button id="applyVelocityCustom">
+            Apply
+          </button>
+
+        </div>
+
+        <div class="example-box">
+
+          Examples:<br><br>
+
+          0<br>
+          sin(pi*x)<br>
+          5*sin(2*pi*x)<br>
+          exp(-100*(x-0.5)^2)
+
+        </div>
+
+        <div
+          id="velocityCustomError"
+          class="error">
+        </div>
+
       </div>
 
-      <textarea
-        id="discreteInput"
-        placeholder="Paste 101 values here. You can use spaces, commas, or new lines."></textarea>
 
+      <!-- Discrete velocity -->
 
-      <div class="counter">
-        Detected values:
-        <span id="discreteCount">
-          0
-        </span>
-        / 101
-      </div>
+      <div
+        id="velocityDiscreteBox"
+        class="input-box">
 
+        <div class="input-label">
+          Enter 101 velocity values
+        </div>
 
-      <div class="discrete-controls">
+        <textarea
+          id="velocityDiscrete"
+          placeholder="Paste 101 values for g(x)."></textarea>
 
-        <button id="applyDiscreteButton">
-          Apply
-        </button>
+        <div class="counter">
+          Detected values:
+          <span id="velocityDiscreteCount">
+            0
+          </span>
+          / 101
+        </div>
 
-        <button id="exampleDiscreteButton">
-          Load Example
-        </button>
+        <div class="controls">
 
-        <button id="clearDiscreteButton">
-          Clear
-        </button>
+          <button id="applyVelocityDiscrete">
+            Apply
+          </button>
 
-      </div>
+          <button id="exampleVelocityDiscrete">
+            Load Example
+          </button>
 
+          <button id="clearVelocityDiscrete">
+            Clear
+          </button>
 
-      <div class="discrete-info">
+        </div>
 
-        Spatial nodes are
-
-        <br><br>
-
-        x = 0.00, 0.01, 0.02, ..., 0.99, 1.00
-
-        <br><br>
-
-        so exactly 101 values are required.
-
-        <br><br>
-
-        You can copy one column containing 101 cells directly from Excel.
-
-        <br><br>
-
-        Because the simulator uses fixed boundary conditions,
-        the first and last values are forced to zero.
+        <div
+          id="velocityDiscreteError"
+          class="error">
+        </div>
 
       </div>
 
 
       <div
-        id="discreteError"
-        class="error">
+        id="rightGaussianNote"
+        class="preset-note"
+        style="display:none;">
+
+        This preset is intended to be used with
+        <b>Gaussian Pulse</b> displacement.
+
+        <br><br>
+
+        For a right-moving wave,
+
+        <br>
+
+        g(x) = -c f'(x)
+
+        <br><br>
+
+        is used so the initial Gaussian preferentially propagates
+        to the right instead of splitting symmetrically.
+
       </div>
 
     </div>
@@ -444,45 +584,16 @@
 <script>
 
 /* =========================================================
-   1. Physical / numerical parameters
+   1. Numerical parameters
    ========================================================= */
 
 const L = 1.0;
-
-
-/*
-  N = number of intervals
-
-  N = 100
-
-  Nodes:
-
-  x_0, x_1, ..., x_100
-
-  Therefore there are
-
-  N + 1 = 101 nodes.
-*/
 
 const N = 100;
 
 const dx = L / N;
 
-
-/*
-  Wave speed
-*/
-
 const c = 1.0;
-
-
-/*
-  CFL condition:
-
-      c Δt / Δx <= 1
-
-  Use CFL = 0.8
-*/
 
 const CFL = 0.8;
 
@@ -497,7 +608,6 @@ const dt =
 const x =
   new Array(N + 1);
 
-
 for (
   let i = 0;
   i <= N;
@@ -511,7 +621,7 @@ for (
 
 
 /* =========================================================
-   3. Wave arrays
+   3. Wave state
    ========================================================= */
 
 let uPrev =
@@ -524,6 +634,22 @@ let uNext =
   new Array(N + 1).fill(0);
 
 
+/*
+  Initial velocity samples
+*/
+
+let gInitial =
+  new Array(N + 1).fill(0);
+
+
+let displacementDiscreteValues =
+  new Array(N + 1).fill(0);
+
+
+let velocityDiscreteValues =
+  new Array(N + 1).fill(0);
+
+
 let time =
   0;
 
@@ -532,13 +658,15 @@ let firstStepPending =
   true;
 
 
+let running =
+  false;
+
+
 /* =========================================================
-   4. Custom expression tokenizer
+   4. Expression tokenizer
    ========================================================= */
 
-function tokenize(
-  expression
-) {
+function tokenize(expression) {
 
   const tokens = [];
 
@@ -553,10 +681,6 @@ function tokenize(
       expression[i];
 
 
-    /*
-      Ignore whitespace
-    */
-
     if (
       /\s/.test(char)
     ) {
@@ -569,7 +693,7 @@ function tokenize(
 
 
     /*
-      Number
+      Numbers including decimals
     */
 
     if (
@@ -612,16 +736,13 @@ function tokenize(
         numberString +=
           expression[i];
 
-
         i++;
 
       }
 
 
       const value =
-        Number(
-          numberString
-        );
+        Number(numberString);
 
 
       if (
@@ -636,11 +757,8 @@ function tokenize(
 
 
       tokens.push({
-
         type: "number",
-
         value: value
-
       });
 
 
@@ -650,13 +768,7 @@ function tokenize(
 
 
     /*
-      Identifier
-
-      x
-      pi
-      sin
-      cos
-      ...
+      identifiers
     */
 
     if (
@@ -677,19 +789,14 @@ function tokenize(
         word +=
           expression[i];
 
-
         i++;
 
       }
 
 
       tokens.push({
-
         type: "identifier",
-
-        value:
-          word.toLowerCase()
-
+        value: word.toLowerCase()
       });
 
 
@@ -698,20 +805,12 @@ function tokenize(
     }
 
 
-    /*
-      Operators
-    */
-
     if (
-      "+-*/^()".includes(
-        char
-      )
+      "+-*/^()".includes(char)
     ) {
 
       tokens.push({
-
         type: char
-
       });
 
 
@@ -736,7 +835,7 @@ function tokenize(
 
 
 /* =========================================================
-   5. Mathematical expression parser
+   5. Expression evaluator
    ========================================================= */
 
 function evaluateExpression(
@@ -745,33 +844,25 @@ function evaluateExpression(
 ) {
 
   const tokens =
-    tokenize(
-      expression
-    );
+    tokenize(expression);
 
 
-  let position =
-    0;
+  let position = 0;
 
 
-  function currentToken() {
+  function token() {
 
-    return tokens[
-      position
-    ];
+    return tokens[position];
 
   }
 
 
-  function consume(
-    type
-  ) {
+  function consume(type) {
 
     if (
-      currentToken()
+      token()
       &&
-      currentToken().type
-      === type
+      token().type === type
     ) {
 
       position++;
@@ -786,10 +877,6 @@ function evaluateExpression(
   }
 
 
-  /*
-    Addition / subtraction
-  */
-
   function parseExpression() {
 
     let value =
@@ -797,8 +884,7 @@ function evaluateExpression(
 
 
     while (
-      position
-      < tokens.length
+      position < tokens.length
     ) {
 
       if (
@@ -835,10 +921,6 @@ function evaluateExpression(
   }
 
 
-  /*
-    Multiplication / division
-  */
-
   function parseTerm() {
 
     let value =
@@ -846,8 +928,7 @@ function evaluateExpression(
 
 
     while (
-      position
-      < tokens.length
+      position < tokens.length
     ) {
 
       if (
@@ -871,8 +952,7 @@ function evaluateExpression(
         if (
           Math.abs(
             denominator
-          )
-          < 1e-14
+          ) < 1e-14
         ) {
 
           throw new Error(
@@ -902,10 +982,6 @@ function evaluateExpression(
   }
 
 
-  /*
-    Unary +/-
-  */
-
   function parseUnary() {
 
     if (
@@ -931,13 +1007,9 @@ function evaluateExpression(
   }
 
 
-  /*
-    Exponentiation
-  */
-
   function parsePower() {
 
-    let base =
+    let value =
       parsePrimary();
 
 
@@ -945,36 +1017,28 @@ function evaluateExpression(
       consume("^")
     ) {
 
-      const exponent =
-        parseUnary();
-
-
-      base =
+      value =
         Math.pow(
-          base,
-          exponent
+          value,
+          parseUnary()
         );
 
     }
 
 
-    return base;
+    return value;
 
   }
 
 
-  /*
-    Primary expressions
-  */
-
   function parsePrimary() {
 
-    const token =
-      currentToken();
+    const current =
+      token();
 
 
     if (
-      !token
+      !current
     ) {
 
       throw new Error(
@@ -984,25 +1048,16 @@ function evaluateExpression(
     }
 
 
-    /*
-      Number
-    */
-
     if (
-      token.type
-      === "number"
+      current.type === "number"
     ) {
 
       position++;
 
-      return token.value;
+      return current.value;
 
     }
 
-
-    /*
-      Parentheses
-    */
 
     if (
       consume("(")
@@ -1028,24 +1083,16 @@ function evaluateExpression(
     }
 
 
-    /*
-      Identifier
-    */
-
     if (
-      token.type
-      === "identifier"
+      current.type === "identifier"
     ) {
 
       position++;
 
+
       const name =
-        token.value;
+        current.value;
 
-
-      /*
-        x
-      */
 
       if (
         name === "x"
@@ -1056,10 +1103,6 @@ function evaluateExpression(
       }
 
 
-      /*
-        pi
-      */
-
       if (
         name === "pi"
       ) {
@@ -1068,10 +1111,6 @@ function evaluateExpression(
 
       }
 
-
-      /*
-        e
-      */
 
       if (
         name === "e"
@@ -1082,39 +1121,27 @@ function evaluateExpression(
       }
 
 
-      /*
-        Allowed functions
-      */
+      const functions = {
 
-      const allowedFunctions = {
+        sin: Math.sin,
 
-        sin:
-          Math.sin,
+        cos: Math.cos,
 
-        cos:
-          Math.cos,
+        tan: Math.tan,
 
-        tan:
-          Math.tan,
+        exp: Math.exp,
 
-        exp:
-          Math.exp,
+        sqrt: Math.sqrt,
 
-        sqrt:
-          Math.sqrt,
+        abs: Math.abs,
 
-        abs:
-          Math.abs,
-
-        log:
-          Math.log
+        log: Math.log
 
       };
 
 
       if (
-        name
-        in allowedFunctions
+        name in functions
       ) {
 
         if (
@@ -1145,19 +1172,17 @@ function evaluateExpression(
 
 
         const result =
-          allowedFunctions[name](
+          functions[name](
             argument
           );
 
 
         if (
-          !Number.isFinite(
-            result
-          )
+          !Number.isFinite(result)
         ) {
 
           throw new Error(
-            "Function produced an invalid value."
+            "Function produced invalid value."
           );
 
         }
@@ -1188,8 +1213,7 @@ function evaluateExpression(
 
 
   if (
-    position
-    !== tokens.length
+    position !== tokens.length
   ) {
 
     throw new Error(
@@ -1200,13 +1224,11 @@ function evaluateExpression(
 
 
   if (
-    !Number.isFinite(
-      result
-    )
+    !Number.isFinite(result)
   ) {
 
     throw new Error(
-      "Expression produced an invalid value."
+      "Expression produced invalid value."
     );
 
   }
@@ -1218,51 +1240,18 @@ function evaluateExpression(
 
 
 /* =========================================================
-   6. Discrete input parser
+   6. General discrete parser
    ========================================================= */
 
-function parseDiscreteInput() {
-
-  let text =
-    document
-      .getElementById(
-        "discreteInput"
-      )
-      .value;
-
-
-  /*
-    Allow:
-
-    0, 0.1, 0.2
-
-    or Excel column:
-
-    0
-    0.1
-    0.2
-
-    or spaces:
-
-    0 0.1 0.2
-
-    Also tolerate brackets.
-  */
+function parseDiscrete(
+  text
+) {
 
   text =
     text
-      .replace(
-        /\[/g,
-        " "
-      )
-      .replace(
-        /\]/g,
-        " "
-      )
-      .replace(
-        /;/g,
-        " "
-      )
+      .replace(/\[/g, " ")
+      .replace(/\]/g, " ")
+      .replace(/;/g, " ")
       .trim();
 
 
@@ -1271,7 +1260,7 @@ function parseDiscreteInput() {
   ) {
 
     throw new Error(
-      "No discrete values entered."
+      "No values entered."
     );
 
   }
@@ -1279,9 +1268,7 @@ function parseDiscreteInput() {
 
   const parts =
     text
-      .split(
-        /[\s,]+/
-      )
+      .split(/[\s,]+/)
       .filter(
         value =>
           value.length > 0
@@ -1289,8 +1276,7 @@ function parseDiscreteInput() {
 
 
   if (
-    parts.length
-    !== N + 1
+    parts.length !== N + 1
   ) {
 
     throw new Error(
@@ -1306,76 +1292,63 @@ function parseDiscreteInput() {
   }
 
 
-  const values =
-    parts.map(
+  return parts.map(
 
-      function (
-        item,
-        index
+    function(
+      textValue,
+      index
+    ) {
+
+      const value =
+        Number(textValue);
+
+
+      if (
+        !Number.isFinite(value)
       ) {
 
-        const value =
-          Number(item);
+        throw new Error(
 
+          "Invalid number at position "
+          + (index + 1)
+          + "."
 
-        if (
-          !Number.isFinite(
-            value
-          )
-        ) {
-
-          throw new Error(
-
-            "Invalid number at position "
-            + (index + 1)
-            + ": "
-            + item
-
-          );
-
-        }
-
-
-        return value;
+        );
 
       }
 
-    );
 
+      return value;
 
-  return values;
+    }
+
+  );
 
 }
 
 
 /* =========================================================
-   7. Count discrete values
+   7. Count discrete inputs
    ========================================================= */
 
-function updateDiscreteCount() {
+function countDiscrete(
+  textareaId,
+  counterId
+) {
 
   let text =
     document
       .getElementById(
-        "discreteInput"
+        textareaId
       )
       .value;
 
 
   text =
     text
-      .replace(
-        /\[/g,
-        " "
-      )
-      .replace(
-        /\]/g,
-        " "
-      )
-      .replace(
-        /;/g,
-        " "
-      )
+      .replace(/\[/g, " ")
+      .replace(/\]/g, " ")
+      .replace(/;/g, " ")
       .trim();
 
 
@@ -1388,9 +1361,7 @@ function updateDiscreteCount() {
 
     count =
       text
-        .split(
-          /[\s,]+/
-        )
+        .split(/[\s,]+/)
         .filter(
           value =>
             value.length > 0
@@ -1400,41 +1371,31 @@ function updateDiscreteCount() {
   }
 
 
-  const countDisplay =
+  const display =
     document
       .getElementById(
-        "discreteCount"
+        counterId
       );
 
 
-  countDisplay.textContent =
+  display.textContent =
     count;
 
 
-  if (
+  display.style.color =
+
     count === N + 1
-  ) {
-
-    countDisplay.style.color =
-      "#087a22";
-
-  }
-
-  else {
-
-    countDisplay.style.color =
-      "#cc0000";
-
-  }
+      ? "#087a22"
+      : "#cc0000";
 
 }
 
 
 /* =========================================================
-   8. Initial condition function
+   8. Initial displacement f(x)
    ========================================================= */
 
-function initialFunction(
+function displacementFunction(
   xValue,
   index
 ) {
@@ -1442,14 +1403,10 @@ function initialFunction(
   const type =
     document
       .getElementById(
-        "initialCondition"
+        "displacementType"
       )
       .value;
 
-
-  /* ---------------------------------------------------------
-     1. sine
-     --------------------------------------------------------- */
 
   if (
     type === "sine"
@@ -1463,101 +1420,68 @@ function initialFunction(
   }
 
 
-  /* ---------------------------------------------------------
-     2. plucked string
-     --------------------------------------------------------- */
-
   if (
     type === "pluck"
   ) {
 
-    const x0 =
+    const peakX =
       0.35;
 
 
-    const A =
-      1.0;
-
-
     if (
-      xValue <= x0
+      xValue <= peakX
     ) {
 
       return (
-        A
-        * xValue
-        / x0
+        xValue
+        / peakX
       );
 
     }
 
 
-    else {
-
-      return (
-        A
-        * (L - xValue)
-        / (L - x0)
-      );
-
-    }
+    return (
+      (L - xValue)
+      /
+      (L - peakX)
+    );
 
   }
 
-
-  /* ---------------------------------------------------------
-     3. Gaussian
-     --------------------------------------------------------- */
 
   if (
     type === "gaussian"
   ) {
 
-    const A =
-      1.0;
-
-
-    const x0 =
-      0.5;
+    const center =
+      0.30;
 
 
     const sigma =
-      0.08;
+      0.06;
 
 
-    return (
+    return Math.exp(
 
-      A
+      -
 
-      *
+      Math.pow(
+        xValue - center,
+        2
+      )
 
-      Math.exp(
+      /
 
-        -
-
-        Math.pow(
-          xValue - x0,
-          2
-        )
-
-        /
-
-        (
-          2
-          * sigma
-          * sigma
-        )
-
+      (
+        2
+        * sigma
+        * sigma
       )
 
     );
 
   }
 
-
-  /* ---------------------------------------------------------
-     4. custom analytic function
-     --------------------------------------------------------- */
 
   if (
     type === "custom"
@@ -1566,7 +1490,7 @@ function initialFunction(
     const expression =
       document
         .getElementById(
-          "customFunction"
+          "displacementCustom"
         )
         .value;
 
@@ -1579,15 +1503,11 @@ function initialFunction(
   }
 
 
-  /* ---------------------------------------------------------
-     5. discrete
-     --------------------------------------------------------- */
-
   if (
     type === "discrete"
   ) {
 
-    return discreteValues[
+    return displacementDiscreteValues[
       index
     ];
 
@@ -1600,25 +1520,171 @@ function initialFunction(
 
 
 /* =========================================================
-   9. Current discrete data
+   9. Initial velocity g(x)
    ========================================================= */
 
-let discreteValues =
-  new Array(
-    N + 1
-  ).fill(0);
-
-
-/* =========================================================
-   10. UI descriptions
-   ========================================================= */
-
-function updateDescription() {
+function velocityFunction(
+  xValue,
+  index
+) {
 
   const type =
     document
       .getElementById(
-        "initialCondition"
+        "velocityType"
+      )
+      .value;
+
+
+  /*
+    zero initial velocity
+  */
+
+  if (
+    type === "zero"
+  ) {
+
+    return 0;
+
+  }
+
+
+  /*
+    Custom analytic velocity
+  */
+
+  if (
+    type === "custom"
+  ) {
+
+    const expression =
+      document
+        .getElementById(
+          "velocityCustom"
+        )
+        .value;
+
+
+    return evaluateExpression(
+      expression,
+      xValue
+    );
+
+  }
+
+
+  /*
+    Discrete velocity
+  */
+
+  if (
+    type === "discrete"
+  ) {
+
+    return velocityDiscreteValues[
+      index
+    ];
+
+  }
+
+
+  /*
+    Right-moving Gaussian
+
+    f(x) =
+      exp(-(x-x0)^2 / (2 sigma^2))
+
+    For right travelling wave:
+
+      g(x) = -c f'(x)
+
+    Since
+
+      f'(x)
+      =
+      -(x-x0)/sigma^2 * f(x)
+
+    therefore
+
+      g(x)
+      =
+      c (x-x0)/sigma^2 * f(x)
+  */
+
+  if (
+    type === "rightGaussian"
+  ) {
+
+    const center =
+      0.30;
+
+
+    const sigma =
+      0.06;
+
+
+    const f =
+      Math.exp(
+
+        -
+
+        Math.pow(
+          xValue - center,
+          2
+        )
+
+        /
+
+        (
+          2
+          * sigma
+          * sigma
+        )
+
+      );
+
+
+    return (
+
+      c
+
+      *
+
+      (
+        xValue - center
+      )
+
+      /
+
+      (
+        sigma
+        * sigma
+      )
+
+      *
+
+      f
+
+    );
+
+  }
+
+
+  return 0;
+
+}
+
+
+/* =========================================================
+   10. UI
+   ========================================================= */
+
+function updateDisplacementUI() {
+
+  const type =
+    document
+      .getElementById(
+        "displacementType"
       )
       .value;
 
@@ -1626,21 +1692,21 @@ function updateDescription() {
   const description =
     document
       .getElementById(
-        "initialDescription"
+        "displacementDescription"
       );
 
 
   const customBox =
     document
       .getElementById(
-        "customBox"
+        "displacementCustomBox"
       );
 
 
   const discreteBox =
     document
       .getElementById(
-        "discreteBox"
+        "displacementDiscreteBox"
       );
 
 
@@ -1657,7 +1723,7 @@ function updateDescription() {
   ) {
 
     description.textContent =
-      "Analytic initial displacement f(x) = sin(πx). Initial velocity g(x) = 0.";
+      "f(x) = sin(πx)";
 
   }
 
@@ -1667,7 +1733,7 @@ function updateDescription() {
   ) {
 
     description.textContent =
-      "Triangular plucked-string initial displacement with peak at x = 0.35. Initial velocity g(x) = 0.";
+      "Triangular plucked-string displacement with peak at x = 0.35.";
 
   }
 
@@ -1677,7 +1743,7 @@ function updateDescription() {
   ) {
 
     description.textContent =
-      "Gaussian initial displacement centered at x = 0.5. Initial velocity g(x) = 0.";
+      "Gaussian displacement centered at x = 0.30.";
 
   }
 
@@ -1687,7 +1753,7 @@ function updateDescription() {
   ) {
 
     description.textContent =
-      "Enter an analytic mathematical expression f(x). Initial velocity g(x) = 0.";
+      "Enter an analytic expression for f(x).";
 
 
     customBox.style.display =
@@ -1701,14 +1767,127 @@ function updateDescription() {
   ) {
 
     description.textContent =
-      "Directly specify the displacement at all 101 spatial grid points.";
+      "Specify f(x) directly at all 101 grid nodes.";
 
 
     discreteBox.style.display =
       "block";
 
 
-    updateDiscreteCount();
+    countDiscrete(
+      "displacementDiscrete",
+      "displacementDiscreteCount"
+    );
+
+  }
+
+}
+
+
+function updateVelocityUI() {
+
+  const type =
+    document
+      .getElementById(
+        "velocityType"
+      )
+      .value;
+
+
+  const description =
+    document
+      .getElementById(
+        "velocityDescription"
+      );
+
+
+  const customBox =
+    document
+      .getElementById(
+        "velocityCustomBox"
+      );
+
+
+  const discreteBox =
+    document
+      .getElementById(
+        "velocityDiscreteBox"
+      );
+
+
+  const rightNote =
+    document
+      .getElementById(
+        "rightGaussianNote"
+      );
+
+
+  customBox.style.display =
+    "none";
+
+
+  discreteBox.style.display =
+    "none";
+
+
+  rightNote.style.display =
+    "none";
+
+
+  if (
+    type === "zero"
+  ) {
+
+    description.textContent =
+      "g(x) = 0. The initial shape starts from rest.";
+
+  }
+
+
+  else if (
+    type === "custom"
+  ) {
+
+    description.textContent =
+      "Enter an analytic expression for initial velocity g(x).";
+
+
+    customBox.style.display =
+      "block";
+
+  }
+
+
+  else if (
+    type === "discrete"
+  ) {
+
+    description.textContent =
+      "Specify g(x) directly at all 101 grid nodes.";
+
+
+    discreteBox.style.display =
+      "block";
+
+
+    countDiscrete(
+      "velocityDiscrete",
+      "velocityDiscreteCount"
+    );
+
+  }
+
+
+  else if (
+    type === "rightGaussian"
+  ) {
+
+    description.textContent =
+      "Preset velocity satisfying approximately g(x) = -c f'(x) for the Gaussian preset.";
+
+
+    rightNote.style.display =
+      "block";
 
   }
 
@@ -1716,10 +1895,14 @@ function updateDescription() {
 
 
 /* =========================================================
-   11. Initialize simulation
+   11. Initialize
    ========================================================= */
 
 function initializeWave() {
+
+  running =
+    false;
+
 
   time =
     0;
@@ -1729,62 +1912,99 @@ function initializeWave() {
     true;
 
 
-  const customError =
+  const displacementType =
     document
       .getElementById(
-        "customError"
-      );
-
-
-  const discreteError =
-    document
-      .getElementById(
-        "discreteError"
-      );
-
-
-  customError.textContent =
-    "";
-
-
-  discreteError.textContent =
-    "";
-
-
-  customError.className =
-    "error";
-
-
-  discreteError.className =
-    "error";
-
-
-  const type =
-    document
-      .getElementById(
-        "initialCondition"
+        "displacementType"
       )
       .value;
+
+
+  const velocityType =
+    document
+      .getElementById(
+        "velocityType"
+      )
+      .value;
+
+
+  /*
+    Clear messages
+  */
+
+  const messageIds = [
+
+    "displacementCustomError",
+
+    "displacementDiscreteError",
+
+    "velocityCustomError",
+
+    "velocityDiscreteError"
+
+  ];
+
+
+  for (
+    const id of messageIds
+  ) {
+
+    document
+      .getElementById(id)
+      .textContent =
+        "";
+
+  }
 
 
   try {
 
     /*
-      Parse discrete data first.
+      Parse displacement discrete
     */
 
     if (
-      type === "discrete"
+      displacementType === "discrete"
     ) {
 
-      discreteValues =
-        parseDiscreteInput();
+      displacementDiscreteValues =
+        parseDiscrete(
+
+          document
+            .getElementById(
+              "displacementDiscrete"
+            )
+            .value
+
+        );
 
     }
 
 
     /*
-      Evaluate initial displacement.
+      Parse velocity discrete
+    */
+
+    if (
+      velocityType === "discrete"
+    ) {
+
+      velocityDiscreteValues =
+        parseDiscrete(
+
+          document
+            .getElementById(
+              "velocityDiscrete"
+            )
+            .value
+
+        );
+
+    }
+
+
+    /*
+      Evaluate f(x) and g(x)
     */
 
     for (
@@ -1794,7 +2014,14 @@ function initializeWave() {
     ) {
 
       uCurr[i] =
-        initialFunction(
+        displacementFunction(
+          x[i],
+          i
+        );
+
+
+      gInitial[i] =
+        velocityFunction(
           x[i],
           i
         );
@@ -1803,10 +2030,7 @@ function initializeWave() {
 
 
     /*
-      Fixed boundary conditions:
-
-      u(0,t) = 0
-      u(L,t) = 0
+      Fixed endpoints
     */
 
     uCurr[0] =
@@ -1818,8 +2042,17 @@ function initializeWave() {
 
 
     /*
-      Previous state
+      For consistency with fixed endpoints,
+      endpoint velocity is also zero.
     */
+
+    gInitial[0] =
+      0;
+
+
+    gInitial[N] =
+      0;
+
 
     uPrev =
       [...uCurr];
@@ -1836,72 +2069,72 @@ function initializeWave() {
         "timeDisplay"
       )
       .textContent =
-        time.toFixed(3);
+        "0.000";
 
 
     drawWave();
 
-
-    /*
-      Success messages
-    */
-
-    if (
-      type === "custom"
-    ) {
-
-      customError.textContent =
-        "Function applied successfully.";
-
-
-      customError.className =
-        "error success";
-
-    }
-
-
-    if (
-      type === "discrete"
-    ) {
-
-      discreteError.textContent =
-        "101 samples applied successfully. Boundary values at x = 0 and x = 1 are fixed to zero.";
-
-
-      discreteError.className =
-        "error success";
-
-    }
-
   }
 
 
-  catch (
-    error
-  ) {
-
-    running =
-      false;
-
+  catch(error) {
 
     if (
-      type === "custom"
+      displacementType === "custom"
     ) {
 
-      customError.textContent =
-        "Error: "
-        + error.message;
+      document
+        .getElementById(
+          "displacementCustomError"
+        )
+        .textContent =
+          "Error: "
+          + error.message;
 
     }
 
 
     else if (
-      type === "discrete"
+      displacementType === "discrete"
     ) {
 
-      discreteError.textContent =
-        "Error: "
-        + error.message;
+      document
+        .getElementById(
+          "displacementDiscreteError"
+        )
+        .textContent =
+          "Error: "
+          + error.message;
+
+    }
+
+
+    else if (
+      velocityType === "custom"
+    ) {
+
+      document
+        .getElementById(
+          "velocityCustomError"
+        )
+        .textContent =
+          "Error: "
+          + error.message;
+
+    }
+
+
+    else if (
+      velocityType === "discrete"
+    ) {
+
+      document
+        .getElementById(
+          "velocityDiscreteError"
+        )
+        .textContent =
+          "Error: "
+          + error.message;
 
     }
 
@@ -1917,7 +2150,7 @@ function initializeWave() {
 
 
 /* =========================================================
-   12. Numerical wave solver
+   12. Finite difference solver
    ========================================================= */
 
 function updateWave() {
@@ -1927,17 +2160,25 @@ function updateWave() {
 
 
   /*
-    First time step:
+    First step:
 
-    u_i^1 =
-        u_i^0
-        + Δt g_i
-        + (1/2) r²
-          (u_{i+1}^0 - 2u_i^0 + u_{i-1}^0)
+    u_i^1
 
-    Currently:
+    =
+    u_i^0
 
-        g(x) = 0
+    +
+
+    Δt g_i
+
+    +
+
+    1/2 r²
+    (
+      u_(i+1)^0
+      - 2u_i^0
+      + u_(i-1)^0
+    )
   */
 
   if (
@@ -1953,6 +2194,11 @@ function updateWave() {
       uNext[i] =
 
         uCurr[i]
+
+        +
+
+        dt
+        * gInitial[i]
 
         +
 
@@ -2004,22 +2250,7 @@ function updateWave() {
 
 
   /*
-    Standard finite difference equation:
-
-    u_i^(n+1)
-
-    =
-
-    2u_i^n
-    - u_i^(n-1)
-
-    +
-
-    r²(
-        u_(i+1)^n
-        - 2u_i^n
-        + u_(i-1)^n
-    )
+    Standard second-order update
   */
 
   for (
@@ -2056,10 +2287,6 @@ function updateWave() {
   }
 
 
-  /*
-    Fixed boundaries
-  */
-
   uNext[0] =
     0;
 
@@ -2067,10 +2294,6 @@ function updateWave() {
   uNext[N] =
     0;
 
-
-  /*
-    Advance state
-  */
 
   uPrev =
     [...uCurr];
@@ -2126,10 +2349,6 @@ function drawWave() {
   );
 
 
-  /* ---------------------------------------------------------
-     Plot dimensions
-     --------------------------------------------------------- */
-
   const marginLeft =
     65;
 
@@ -2149,26 +2368,22 @@ function drawWave() {
   const plotWidth =
 
     width
-
     - marginLeft
-
     - marginRight;
 
 
   const plotHeight =
 
     height
-
     - marginTop
-
     - marginBottom;
 
 
-  /* ---------------------------------------------------------
-     Dynamic y range
-     --------------------------------------------------------- */
+  /*
+    Dynamic y range
+  */
 
-  let maxAmplitude =
+  let maximum =
     1;
 
 
@@ -2184,10 +2399,10 @@ function drawWave() {
       )
     ) {
 
-      maxAmplitude =
+      maximum =
         Math.max(
 
-          maxAmplitude,
+          maximum,
 
           Math.abs(
             uCurr[i]
@@ -2202,12 +2417,8 @@ function drawWave() {
 
   const yRange =
     Math.max(
-
       1.2,
-
-      maxAmplitude
-      * 1.2
-
+      maximum * 1.2
     );
 
 
@@ -2219,12 +2430,8 @@ function drawWave() {
     yRange;
 
 
-  /* ---------------------------------------------------------
-     Coordinate conversion
-     --------------------------------------------------------- */
-
   function xToPixel(
-    xValue
+    value
   ) {
 
     return (
@@ -2233,8 +2440,7 @@ function drawWave() {
 
       +
 
-      (xValue / L)
-
+      value / L
       * plotWidth
 
     );
@@ -2243,7 +2449,7 @@ function drawWave() {
 
 
   function yToPixel(
-    yValue
+    value
   ) {
 
     return (
@@ -2253,15 +2459,13 @@ function drawWave() {
       +
 
       (
-        yMax
-        - yValue
+        yMax - value
       )
 
       /
 
       (
-        yMax
-        - yMin
+        yMax - yMin
       )
 
       *
@@ -2273,9 +2477,9 @@ function drawWave() {
   }
 
 
-  /* ---------------------------------------------------------
-     Background
-     --------------------------------------------------------- */
+  /*
+    Background
+  */
 
   ctx.fillStyle =
     "#ffffff";
@@ -2289,9 +2493,9 @@ function drawWave() {
   );
 
 
-  /* ---------------------------------------------------------
-     Vertical grid
-     --------------------------------------------------------- */
+  /*
+    Grid
+  */
 
   ctx.strokeStyle =
     "#e6e6e6";
@@ -2307,13 +2511,9 @@ function drawWave() {
     j++
   ) {
 
-    const xValue =
-      j / 10;
-
-
     const px =
       xToPixel(
-        xValue
+        j / 10
       );
 
 
@@ -2328,8 +2528,7 @@ function drawWave() {
 
     ctx.lineTo(
       px,
-      marginTop
-      + plotHeight
+      marginTop + plotHeight
     );
 
 
@@ -2337,10 +2536,6 @@ function drawWave() {
 
   }
 
-
-  /* ---------------------------------------------------------
-     Horizontal grid
-     --------------------------------------------------------- */
 
   const yTicks = [
 
@@ -2358,14 +2553,12 @@ function drawWave() {
 
 
   for (
-    const yValue
+    const value
     of yTicks
   ) {
 
     const py =
-      yToPixel(
-        yValue
-      );
+      yToPixel(value);
 
 
     ctx.beginPath();
@@ -2378,8 +2571,7 @@ function drawWave() {
 
 
     ctx.lineTo(
-      marginLeft
-      + plotWidth,
+      marginLeft + plotWidth,
       py
     );
 
@@ -2389,16 +2581,12 @@ function drawWave() {
   }
 
 
-  /* ---------------------------------------------------------
-     Plot border
-     --------------------------------------------------------- */
+  /*
+    Border
+  */
 
   ctx.strokeStyle =
     "#777";
-
-
-  ctx.lineWidth =
-    1;
 
 
   ctx.strokeRect(
@@ -2409,9 +2597,9 @@ function drawWave() {
   );
 
 
-  /* ---------------------------------------------------------
-     x axis
-     --------------------------------------------------------- */
+  /*
+    x axis
+  */
 
   const zeroY =
     yToPixel(0);
@@ -2435,8 +2623,7 @@ function drawWave() {
 
 
   ctx.lineTo(
-    marginLeft
-    + plotWidth,
+    marginLeft + plotWidth,
     zeroY
   );
 
@@ -2444,9 +2631,9 @@ function drawWave() {
   ctx.stroke();
 
 
-  /* ---------------------------------------------------------
-     x-axis labels
-     --------------------------------------------------------- */
+  /*
+    labels
+  */
 
   ctx.fillStyle =
     "#333";
@@ -2470,21 +2657,15 @@ function drawWave() {
     j++
   ) {
 
-    const xValue =
+    const value =
       j / 10;
-
-
-    const px =
-      xToPixel(
-        xValue
-      );
 
 
     ctx.fillText(
 
-      xValue.toFixed(1),
+      value.toFixed(1),
 
-      px,
+      xToPixel(value),
 
       marginTop
       + plotHeight
@@ -2495,10 +2676,6 @@ function drawWave() {
   }
 
 
-  /* ---------------------------------------------------------
-     y-axis labels
-     --------------------------------------------------------- */
-
   ctx.textAlign =
     "right";
 
@@ -2508,32 +2685,26 @@ function drawWave() {
 
 
   for (
-    const yValue
+    const value
     of yTicks
   ) {
 
-    const py =
-      yToPixel(
-        yValue
-      );
-
-
     ctx.fillText(
 
-      yValue.toFixed(2),
+      value.toFixed(2),
 
       marginLeft - 9,
 
-      py
+      yToPixel(value)
 
     );
 
   }
 
 
-  /* ---------------------------------------------------------
-     Axis titles
-     --------------------------------------------------------- */
+  /*
+    x label
+  */
 
   ctx.fillStyle =
     "#111";
@@ -2562,6 +2733,10 @@ function drawWave() {
 
   );
 
+
+  /*
+    y label
+  */
 
   ctx.save();
 
@@ -2599,9 +2774,9 @@ function drawWave() {
   ctx.restore();
 
 
-  /* ---------------------------------------------------------
-     Wave curve
-     --------------------------------------------------------- */
+  /*
+    Wave
+  */
 
   ctx.strokeStyle =
     "#0066cc";
@@ -2659,21 +2834,22 @@ function drawWave() {
   ctx.stroke();
 
 
-  /* ---------------------------------------------------------
-     Show grid samples as dots in discrete mode
-     --------------------------------------------------------- */
-
-  const type =
-    document
-      .getElementById(
-        "initialCondition"
-      )
-      .value;
-
+  /*
+    Show nodes when displacement
+    came from discrete samples
+    and t = 0.
+  */
 
   if (
-    type === "discrete"
+    document
+      .getElementById(
+        "displacementType"
+      )
+      .value
+      === "discrete"
+
     &&
+
     time === 0
   ) {
 
@@ -2716,9 +2892,9 @@ function drawWave() {
   }
 
 
-  /* ---------------------------------------------------------
-     Fixed endpoints
-     --------------------------------------------------------- */
+  /*
+    Fixed endpoints
+  */
 
   ctx.fillStyle =
     "#d00000";
@@ -2760,10 +2936,6 @@ function drawWave() {
    15. Animation
    ========================================================= */
 
-let running =
-  false;
-
-
 const stepsPerFrame =
   2;
 
@@ -2780,9 +2952,9 @@ function animate() {
 
 
   for (
-    let step = 0;
-    step < stepsPerFrame;
-    step++
+    let i = 0;
+    i < stepsPerFrame;
+    i++
   ) {
 
     updateWave();
@@ -2809,7 +2981,7 @@ function animate() {
 
 
 /* =========================================================
-   16. Main buttons
+   16. Main controls
    ========================================================= */
 
 document
@@ -2818,7 +2990,7 @@ document
   )
   .addEventListener(
     "click",
-    function () {
+    function() {
 
       if (
         !running
@@ -2844,7 +3016,7 @@ document
   )
   .addEventListener(
     "click",
-    function () {
+    function() {
 
       running =
         false;
@@ -2859,11 +3031,7 @@ document
   )
   .addEventListener(
     "click",
-    function () {
-
-      running =
-        false;
-
+    function() {
 
       initializeWave();
 
@@ -2872,96 +3040,58 @@ document
 
 
 /* =========================================================
-   17. Initial condition selector
+   17. Displacement events
    ========================================================= */
 
 document
   .getElementById(
-    "initialCondition"
+    "displacementType"
   )
   .addEventListener(
     "change",
-    function () {
+    function() {
 
       running =
         false;
 
 
-      updateDescription();
+      updateDisplacementUI();
 
-
-      const type =
-        this.value;
-
-
-      /*
-        Don't immediately initialize empty
-        discrete input.
-      */
 
       if (
-        type !== "discrete"
+        this.value !== "discrete"
       ) {
 
         initializeWave();
 
       }
 
-
-      else {
-
-        drawWave();
-
-      }
-
     }
   );
 
 
-/* =========================================================
-   18. Custom function Apply
-   ========================================================= */
-
 document
   .getElementById(
-    "applyCustomButton"
+    "applyDisplacementCustom"
   )
   .addEventListener(
     "click",
-    function () {
-
-      running =
-        false;
-
-
-      initializeWave();
-
-    }
+    initializeWave
   );
 
 
-/*
-  Press Enter to apply.
-*/
-
 document
   .getElementById(
-    "customFunction"
+    "displacementCustom"
   )
   .addEventListener(
     "keydown",
-    function (
-      event
-    ) {
+    function(event) {
 
       if (
         event.key === "Enter"
       ) {
 
-        running =
-          false;
-
-
         initializeWave();
 
       }
@@ -2970,101 +3100,75 @@ document
   );
 
 
-/* =========================================================
-   19. Discrete Apply
-   ========================================================= */
-
 document
   .getElementById(
-    "applyDiscreteButton"
-  )
-  .addEventListener(
-    "click",
-    function () {
-
-      running =
-        false;
-
-
-      initializeWave();
-
-    }
-  );
-
-
-/* =========================================================
-   20. Update discrete count while typing
-   ========================================================= */
-
-document
-  .getElementById(
-    "discreteInput"
+    "displacementDiscrete"
   )
   .addEventListener(
     "input",
-    function () {
+    function() {
 
-      updateDiscreteCount();
+      countDiscrete(
+        "displacementDiscrete",
+        "displacementDiscreteCount"
+      );
 
     }
   );
 
 
-/* =========================================================
-   21. Clear discrete values
-   ========================================================= */
-
 document
   .getElementById(
-    "clearDiscreteButton"
+    "applyDisplacementDiscrete"
   )
   .addEventListener(
     "click",
-    function () {
+    initializeWave
+  );
 
-      running =
-        false;
 
+document
+  .getElementById(
+    "clearDisplacementDiscrete"
+  )
+  .addEventListener(
+    "click",
+    function() {
 
       document
         .getElementById(
-          "discreteInput"
+          "displacementDiscrete"
         )
         .value =
           "";
 
 
-      document
-        .getElementById(
-          "discreteError"
-        )
-        .textContent =
-          "";
-
-
-      updateDiscreteCount();
+      countDiscrete(
+        "displacementDiscrete",
+        "displacementDiscreteCount"
+      );
 
     }
   );
 
 
 /* =========================================================
-   22. Generate discrete Gaussian example
+   18. Discrete displacement example
    ========================================================= */
 
 document
   .getElementById(
-    "exampleDiscreteButton"
+    "exampleDisplacementDiscrete"
   )
   .addEventListener(
     "click",
-    function () {
+    function() {
 
       const values = [];
 
 
       const center =
-        0.35;
+        0.30;
 
 
       const sigma =
@@ -3077,17 +3181,13 @@ document
         i++
       ) {
 
-        const xi =
-          x[i];
-
-
         let value =
           Math.exp(
 
             -
 
             Math.pow(
-              xi - center,
+              x[i] - center,
               2
             )
 
@@ -3102,9 +3202,185 @@ document
           );
 
 
-        /*
-          Fixed boundary
-        */
+        if (
+          i === 0
+          ||
+          i === N
+        ) {
+
+          value =
+            0;
+
+        }
+
+
+        values.push(
+          value.toFixed(7)
+        );
+
+      }
+
+
+      document
+        .getElementById(
+          "displacementDiscrete"
+        )
+        .value =
+          values.join("\n");
+
+
+      countDiscrete(
+        "displacementDiscrete",
+        "displacementDiscreteCount"
+      );
+
+
+      initializeWave();
+
+    }
+  );
+
+
+/* =========================================================
+   19. Velocity events
+   ========================================================= */
+
+document
+  .getElementById(
+    "velocityType"
+  )
+  .addEventListener(
+    "change",
+    function() {
+
+      running =
+        false;
+
+
+      updateVelocityUI();
+
+
+      if (
+        this.value !== "discrete"
+      ) {
+
+        initializeWave();
+
+      }
+
+    }
+  );
+
+
+document
+  .getElementById(
+    "applyVelocityCustom"
+  )
+  .addEventListener(
+    "click",
+    initializeWave
+  );
+
+
+document
+  .getElementById(
+    "velocityCustom"
+  )
+  .addEventListener(
+    "keydown",
+    function(event) {
+
+      if (
+        event.key === "Enter"
+      ) {
+
+        initializeWave();
+
+      }
+
+    }
+  );
+
+
+document
+  .getElementById(
+    "velocityDiscrete"
+  )
+  .addEventListener(
+    "input",
+    function() {
+
+      countDiscrete(
+        "velocityDiscrete",
+        "velocityDiscreteCount"
+      );
+
+    }
+  );
+
+
+document
+  .getElementById(
+    "applyVelocityDiscrete"
+  )
+  .addEventListener(
+    "click",
+    initializeWave
+  );
+
+
+document
+  .getElementById(
+    "clearVelocityDiscrete"
+  )
+  .addEventListener(
+    "click",
+    function() {
+
+      document
+        .getElementById(
+          "velocityDiscrete"
+        )
+        .value =
+          "";
+
+
+      countDiscrete(
+        "velocityDiscrete",
+        "velocityDiscreteCount"
+      );
+
+    }
+  );
+
+
+/* =========================================================
+   20. Discrete velocity example
+   ========================================================= */
+
+document
+  .getElementById(
+    "exampleVelocityDiscrete"
+  )
+  .addEventListener(
+    "click",
+    function() {
+
+      const values = [];
+
+
+      for (
+        let i = 0;
+        i <= N;
+        i++
+      ) {
+
+        let value =
+          Math.sin(
+            Math.PI
+            * x[i]
+          );
+
 
         if (
           i === 0
@@ -3119,7 +3395,7 @@ document
 
 
         values.push(
-          value.toFixed(6)
+          value.toFixed(7)
         );
 
       }
@@ -3127,19 +3403,16 @@ document
 
       document
         .getElementById(
-          "discreteInput"
+          "velocityDiscrete"
         )
         .value =
-          values.join(
-            "\n"
-          );
+          values.join("\n");
 
 
-      updateDiscreteCount();
-
-
-      running =
-        false;
+      countDiscrete(
+        "velocityDiscrete",
+        "velocityDiscreteCount"
+      );
 
 
       initializeWave();
@@ -3149,7 +3422,7 @@ document
 
 
 /* =========================================================
-   23. Parameter display
+   21. Parameters
    ========================================================= */
 
 document
@@ -3207,7 +3480,9 @@ document
   .textContent =
 
     (
-      c * dt / dx
+      c
+      * dt
+      / dx
     ).toFixed(3)
 
     +
@@ -3216,10 +3491,12 @@ document
 
 
 /* =========================================================
-   24. Start
+   22. Start
    ========================================================= */
 
-updateDescription();
+updateDisplacementUI();
+
+updateVelocityUI();
 
 initializeWave();
 
