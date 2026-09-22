@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,26 +11,27 @@
     body {
       font-family: Arial, sans-serif;
       max-width: 1000px;
-      margin: 40px auto;
+      margin: 20px auto;
       padding: 0 20px;
       background: #f7f7f7;
     }
 
     h1 {
       text-align: center;
+      margin-bottom: 8px;
     }
 
     .equation {
       text-align: center;
-      font-size: 24px;
-      margin: 20px;
+      font-size: 20px;
+      margin-bottom: 20px;
     }
 
     .panel {
       background: white;
       padding: 20px;
       border-radius: 10px;
-      margin-top: 20px;
+      margin-top: 15px;
     }
 
     canvas {
@@ -40,12 +42,34 @@
     }
 
     button {
-      padding: 10px 20px;
-      margin-right: 10px;
-      font-size: 16px;
+      padding: 8px 16px;
+      margin-right: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    select {
+      padding: 6px;
+    }
+
+    .parameter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      max-width: 400px;
+      gap: 8px;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-family: monospace;
+    }
+
+    .stable {
+      font-weight: bold;
     }
   </style>
 </head>
+
 
 <body>
 
@@ -55,44 +79,59 @@
     ∂²u/∂t² = c² ∂²u/∂x²
   </div>
 
+
   <div class="panel">
 
     <h2>Simulation</h2>
 
-    <canvas id="waveCanvas"
-            width="900"
-            height="400">
+    <canvas
+      id="waveCanvas"
+      width="900"
+      height="400">
     </canvas>
 
     <br><br>
 
-    <button>Play</button>
-    <button>Pause</button>
-    <button>Reset</button>
+    <button id="playButton">Play</button>
+    <button id="pauseButton">Pause</button>
+    <button id="resetButton">Reset</button>
+
+    <div class="status">
+      Time:
+      <span id="timeDisplay">0.000</span> s
+    </div>
 
   </div>
+
 
   <div class="panel">
 
     <h2>Parameters</h2>
 
-    <p>
-      L = 1
-    </p>
+    <div class="parameter-grid">
 
-    <p>
-      N = 100
-    </p>
+      <div>L</div>
+      <div id="LDisplay"></div>
 
-    <p>
-      Δx = 0.01
-    </p>
+      <div>N</div>
+      <div id="NDisplay"></div>
 
-    <p>
-      c = 1
-    </p>
+      <div>Δx</div>
+      <div id="dxDisplay"></div>
+
+      <div>c</div>
+      <div id="cDisplay"></div>
+
+      <div>Δt</div>
+      <div id="dtDisplay"></div>
+
+      <div>CFL number</div>
+      <div class="stable" id="cflDisplay"></div>
+
+    </div>
 
   </div>
+
 
   <div class="panel">
 
@@ -102,27 +141,507 @@
       u(x,0) = f(x)
     </p>
 
-    <select>
+    <select id="initialCondition">
 
-      <option>
+      <option value="sine">
         sin(πx)
       </option>
 
-      <option>
+      <option value="pluck">
         Plucked String
       </option>
 
-      <option>
+      <option value="gaussian">
         Gaussian Pulse
-      </option>
-
-      <option>
-        Custom
       </option>
 
     </select>
 
   </div>
+
+
+<script>
+
+/* =========================================================
+   1. Physical / Numerical Parameters
+   ========================================================= */
+
+const L = 1.0;
+const N = 100;
+
+const dx = L / N;
+
+const c = 1.0;
+
+/*
+  CFL condition for 1D wave equation:
+
+      c * dt / dx <= 1
+
+  여기서는 안정성을 위해 CFL = 0.8 사용
+*/
+
+const CFL = 0.8;
+
+const dt = CFL * dx / c;
+
+
+/* =========================================================
+   2. Grid
+   ========================================================= */
+
+/*
+   x = 0 ~ L 을 N등분하면
+   node 개수는 N+1개
+*/
+
+const x = new Array(N + 1);
+
+for (let i = 0; i <= N; i++) {
+
+  x[i] = i * dx;
+
+}
+
+
+/* =========================================================
+   3. Wave Arrays
+   ========================================================= */
+
+/*
+   uPrev : 이전 시간
+   uCurr : 현재 시간
+   uNext : 다음 시간
+*/
+
+let uPrev = new Array(N + 1).fill(0);
+let uCurr = new Array(N + 1).fill(0);
+let uNext = new Array(N + 1).fill(0);
+
+
+/* =========================================================
+   4. Initial Condition
+   ========================================================= */
+
+function initialFunction(xValue) {
+
+  const type =
+    document.getElementById("initialCondition").value;
+
+
+  /* sin(pi x) */
+
+  if (type === "sine") {
+
+    return Math.sin(Math.PI * xValue);
+
+  }
+
+
+  /* Plucked String */
+
+  if (type === "pluck") {
+
+    const x0 = 0.35;
+    const A = 1.0;
+
+    if (xValue <= x0) {
+
+      return A * xValue / x0;
+
+    }
+
+    else {
+
+      return A * (L - xValue) / (L - x0);
+
+    }
+
+  }
+
+
+  /* Gaussian Pulse */
+
+  if (type === "gaussian") {
+
+    const A = 1.0;
+    const x0 = 0.5;
+    const sigma = 0.08;
+
+    return A *
+      Math.exp(
+        -Math.pow(xValue - x0, 2)
+        /
+        (2 * sigma * sigma)
+      );
+
+  }
+
+}
+
+
+/* =========================================================
+   5. Initialize Simulation
+   ========================================================= */
+
+let time = 0;
+
+function initializeWave() {
+
+  time = 0;
+
+  /*
+     Initial displacement
+
+         u(x,0) = f(x)
+  */
+
+  for (let i = 0; i <= N; i++) {
+
+    uCurr[i] = initialFunction(x[i]);
+
+  }
+
+
+  /*
+     Fixed boundary condition
+
+         u(0,t) = 0
+         u(L,t) = 0
+  */
+
+  uCurr[0] = 0;
+  uCurr[N] = 0;
+
+
+  /*
+     Initial velocity
+
+         g(x) = 0
+
+     First time step:
+
+     u_i^1 =
+       u_i^0
+       + dt * g_i
+       + 1/2 r²
+       (u_{i+1} - 2u_i + u_{i-1})
+
+     g_i = 0
+  */
+
+  const r = c * dt / dx;
+
+  uPrev = [...uCurr];
+
+  let firstStep = new Array(N + 1).fill(0);
+
+  for (let i = 1; i < N; i++) {
+
+    firstStep[i] =
+      uCurr[i]
+      +
+      0.5 * r * r *
+      (
+        uCurr[i + 1]
+        - 2 * uCurr[i]
+        + uCurr[i - 1]
+      );
+
+  }
+
+  firstStep[0] = 0;
+  firstStep[N] = 0;
+
+  uCurr = firstStep;
+
+  drawWave();
+
+  document.getElementById("timeDisplay")
+    .textContent = time.toFixed(3);
+
+}
+
+
+/* =========================================================
+   6. Finite Difference Solver
+   ========================================================= */
+
+function updateWave() {
+
+  const r = c * dt / dx;
+
+  for (let i = 1; i < N; i++) {
+
+    uNext[i] =
+      2 * uCurr[i]
+      - uPrev[i]
+      +
+      r * r *
+      (
+        uCurr[i + 1]
+        - 2 * uCurr[i]
+        + uCurr[i - 1]
+      );
+
+  }
+
+
+  /*
+     fixed endpoints
+  */
+
+  uNext[0] = 0;
+  uNext[N] = 0;
+
+
+  /*
+     shift time levels
+  */
+
+  uPrev = [...uCurr];
+  uCurr = [...uNext];
+
+  time += dt;
+
+}
+
+
+/* =========================================================
+   7. Canvas Drawing
+   ========================================================= */
+
+const canvas =
+  document.getElementById("waveCanvas");
+
+const ctx =
+  canvas.getContext("2d");
+
+
+function drawWave() {
+
+  const width = canvas.width;
+  const height = canvas.height;
+
+  ctx.clearRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+
+  /* coordinate axis */
+
+  ctx.strokeStyle = "#999";
+  ctx.lineWidth = 1;
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    0,
+    height / 2
+  );
+
+  ctx.lineTo(
+    width,
+    height / 2
+  );
+
+  ctx.stroke();
+
+
+  /* end points */
+
+  ctx.fillStyle = "black";
+
+  ctx.fillText(
+    "x = 0",
+    5,
+    height / 2 + 20
+  );
+
+  ctx.fillText(
+    "x = L",
+    width - 35,
+    height / 2 + 20
+  );
+
+
+  /* wave */
+
+  ctx.strokeStyle = "#0066cc";
+  ctx.lineWidth = 3;
+
+  ctx.beginPath();
+
+
+  const verticalScale = 140;
+
+  for (let i = 0; i <= N; i++) {
+
+    const px =
+      (x[i] / L) * width;
+
+    const py =
+      height / 2
+      - uCurr[i] * verticalScale;
+
+
+    if (i === 0) {
+
+      ctx.moveTo(px, py);
+
+    }
+
+    else {
+
+      ctx.lineTo(px, py);
+
+    }
+
+  }
+
+  ctx.stroke();
+
+}
+
+
+/* =========================================================
+   8. Animation
+   ========================================================= */
+
+let running = false;
+
+
+/*
+   dt = 0.008 이고 화면은 약 60 FPS
+
+   한 프레임마다 2 numerical steps 진행
+*/
+
+const stepsPerFrame = 2;
+
+
+function animate() {
+
+  if (!running) return;
+
+
+  for (let s = 0; s < stepsPerFrame; s++) {
+
+    updateWave();
+
+  }
+
+
+  drawWave();
+
+
+  document.getElementById("timeDisplay")
+    .textContent = time.toFixed(3);
+
+
+  requestAnimationFrame(animate);
+
+}
+
+
+/* =========================================================
+   9. Buttons
+   ========================================================= */
+
+document
+  .getElementById("playButton")
+  .addEventListener(
+    "click",
+    function () {
+
+      if (!running) {
+
+        running = true;
+
+        requestAnimationFrame(animate);
+
+      }
+
+    }
+  );
+
+
+document
+  .getElementById("pauseButton")
+  .addEventListener(
+    "click",
+    function () {
+
+      running = false;
+
+    }
+  );
+
+
+document
+  .getElementById("resetButton")
+  .addEventListener(
+    "click",
+    function () {
+
+      running = false;
+
+      initializeWave();
+
+    }
+  );
+
+
+document
+  .getElementById("initialCondition")
+  .addEventListener(
+    "change",
+    function () {
+
+      running = false;
+
+      initializeWave();
+
+    }
+  );
+
+
+/* =========================================================
+   10. Parameter Display
+   ========================================================= */
+
+document.getElementById("LDisplay")
+  .textContent = L;
+
+document.getElementById("NDisplay")
+  .textContent = N;
+
+document.getElementById("dxDisplay")
+  .textContent = dx.toFixed(4);
+
+document.getElementById("cDisplay")
+  .textContent = c;
+
+document.getElementById("dtDisplay")
+  .textContent = dt.toFixed(4);
+
+document.getElementById("cflDisplay")
+  .textContent =
+  (c * dt / dx).toFixed(3)
+  + " ✓ Stable";
+
+
+/* =========================================================
+   Start
+   ========================================================= */
+
+initializeWave();
+
+</script>
+
 
 </body>
 </html>
