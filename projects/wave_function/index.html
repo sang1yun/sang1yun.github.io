@@ -67,6 +67,17 @@
       font-family: monospace;
     }
 
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 10px;
+      box-sizing: border-box;
+      resize: vertical;
+      font-family: monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
     .controls {
       margin-top: 16px;
     }
@@ -94,7 +105,7 @@
       line-height: 1.6;
     }
 
-    .custom-box {
+    .input-box {
       margin-top: 16px;
       padding: 15px;
       background: #f6f8fa;
@@ -103,8 +114,8 @@
       display: none;
     }
 
-    .custom-label {
-      margin-bottom: 7px;
+    .input-label {
+      margin-bottom: 8px;
       font-weight: bold;
     }
 
@@ -135,6 +146,29 @@
 
     .success {
       color: #087a22;
+    }
+
+    .discrete-controls {
+      margin-top: 10px;
+    }
+
+    .discrete-info {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .counter {
+      font-family: monospace;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+
+    code {
+      background: #eee;
+      padding: 2px 5px;
+      border-radius: 4px;
     }
   </style>
 </head>
@@ -210,6 +244,9 @@
       <div>N</div>
       <div id="NDisplay"></div>
 
+      <div>Number of nodes</div>
+      <div id="nodeDisplay"></div>
+
       <div>Δx</div>
       <div id="dxDisplay"></div>
 
@@ -231,7 +268,7 @@
 
 
   <!-- =====================================================
-       Initial condition
+       Initial Condition
        ===================================================== -->
 
   <div class="panel">
@@ -261,6 +298,10 @@
         Custom Function
       </option>
 
+      <option value="discrete">
+        Discrete Samples
+      </option>
+
     </select>
 
 
@@ -270,13 +311,15 @@
     </p>
 
 
-    <!-- Custom function -->
+    <!-- ===================================================
+         Custom Function
+         =================================================== -->
 
     <div
       id="customBox"
-      class="custom-box">
+      class="input-box">
 
-      <div class="custom-label">
+      <div class="input-label">
         Enter f(x)
       </div>
 
@@ -298,7 +341,7 @@
 
       <div class="example-box">
 
-        Examples:<br>
+        Examples:<br><br>
 
         sin(2*pi*x)<br>
 
@@ -320,6 +363,81 @@
 
     </div>
 
+
+    <!-- ===================================================
+         Discrete Input
+         =================================================== -->
+
+    <div
+      id="discreteBox"
+      class="input-box">
+
+      <div class="input-label">
+        Enter 101 discrete values
+      </div>
+
+      <textarea
+        id="discreteInput"
+        placeholder="Paste 101 values here. You can use spaces, commas, or new lines."></textarea>
+
+
+      <div class="counter">
+        Detected values:
+        <span id="discreteCount">
+          0
+        </span>
+        / 101
+      </div>
+
+
+      <div class="discrete-controls">
+
+        <button id="applyDiscreteButton">
+          Apply
+        </button>
+
+        <button id="exampleDiscreteButton">
+          Load Example
+        </button>
+
+        <button id="clearDiscreteButton">
+          Clear
+        </button>
+
+      </div>
+
+
+      <div class="discrete-info">
+
+        Spatial nodes are
+
+        <br><br>
+
+        x = 0.00, 0.01, 0.02, ..., 0.99, 1.00
+
+        <br><br>
+
+        so exactly 101 values are required.
+
+        <br><br>
+
+        You can copy one column containing 101 cells directly from Excel.
+
+        <br><br>
+
+        Because the simulator uses fixed boundary conditions,
+        the first and last values are forced to zero.
+
+      </div>
+
+
+      <div
+        id="discreteError"
+        class="error">
+      </div>
+
+    </div>
+
   </div>
 
 
@@ -333,15 +451,17 @@ const L = 1.0;
 
 
 /*
-  Number of intervals
+  N = number of intervals
 
   N = 100
 
-  therefore nodes are
+  Nodes:
 
   x_0, x_1, ..., x_100
 
-  = 101 points
+  Therefore there are
+
+  N + 1 = 101 nodes.
 */
 
 const N = 100;
@@ -350,18 +470,18 @@ const dx = L / N;
 
 
 /*
-  Wave propagation speed
+  Wave speed
 */
 
 const c = 1.0;
 
 
 /*
-  CFL condition
+  CFL condition:
 
       c Δt / Δx <= 1
 
-  We choose 0.8 for stability.
+  Use CFL = 0.8
 */
 
 const CFL = 0.8;
@@ -404,45 +524,21 @@ let uNext =
   new Array(N + 1).fill(0);
 
 
-let time = 0;
+let time =
+  0;
 
-let firstStepPending = true;
+
+let firstStepPending =
+  true;
 
 
 /* =========================================================
-   4. Custom mathematical expression parser
+   4. Custom expression tokenizer
    ========================================================= */
 
-
-/*
-  Supported:
-
-  numbers
-
-  x
-
-  pi
-  e
-
-  +
-  -
-  *
-  /
-  ^
-
-  parentheses
-
-  sin()
-  cos()
-  tan()
-  exp()
-  sqrt()
-  abs()
-  log()
-*/
-
-
-function tokenize(expression) {
+function tokenize(
+  expression
+) {
 
   const tokens = [];
 
@@ -458,7 +554,7 @@ function tokenize(expression) {
 
 
     /*
-      Ignore spaces
+      Ignore whitespace
     */
 
     if (
@@ -516,13 +612,16 @@ function tokenize(expression) {
         numberString +=
           expression[i];
 
+
         i++;
 
       }
 
 
       const value =
-        Number(numberString);
+        Number(
+          numberString
+        );
 
 
       if (
@@ -537,8 +636,11 @@ function tokenize(expression) {
 
 
       tokens.push({
+
         type: "number",
+
         value: value
+
       });
 
 
@@ -548,7 +650,13 @@ function tokenize(expression) {
 
 
     /*
-      Variable / function / constant
+      Identifier
+
+      x
+      pi
+      sin
+      cos
+      ...
     */
 
     if (
@@ -569,18 +677,19 @@ function tokenize(expression) {
         word +=
           expression[i];
 
+
         i++;
 
       }
 
 
-      word =
-        word.toLowerCase();
-
-
       tokens.push({
+
         type: "identifier",
-        value: word
+
+        value:
+          word.toLowerCase()
+
       });
 
 
@@ -594,12 +703,17 @@ function tokenize(expression) {
     */
 
     if (
-      "+-*/^()".includes(char)
+      "+-*/^()".includes(
+        char
+      )
     ) {
 
       tokens.push({
+
         type: char
+
       });
+
 
       i++;
 
@@ -622,7 +736,7 @@ function tokenize(expression) {
 
 
 /* =========================================================
-   Recursive descent parser
+   5. Mathematical expression parser
    ========================================================= */
 
 function evaluateExpression(
@@ -631,25 +745,33 @@ function evaluateExpression(
 ) {
 
   const tokens =
-    tokenize(expression);
+    tokenize(
+      expression
+    );
 
 
-  let position = 0;
+  let position =
+    0;
 
 
   function currentToken() {
 
-    return tokens[position];
+    return tokens[
+      position
+    ];
 
   }
 
 
-  function consume(type) {
+  function consume(
+    type
+  ) {
 
     if (
       currentToken()
       &&
-      currentToken().type === type
+      currentToken().type
+      === type
     ) {
 
       position++;
@@ -665,11 +787,7 @@ function evaluateExpression(
 
 
   /*
-    expression:
-
-    term
-    + term
-    - term
+    Addition / subtraction
   */
 
   function parseExpression() {
@@ -679,7 +797,8 @@ function evaluateExpression(
 
 
     while (
-      position < tokens.length
+      position
+      < tokens.length
     ) {
 
       if (
@@ -691,6 +810,7 @@ function evaluateExpression(
 
       }
 
+
       else if (
         consume("-")
       ) {
@@ -699,6 +819,7 @@ function evaluateExpression(
           parseTerm();
 
       }
+
 
       else {
 
@@ -715,7 +836,7 @@ function evaluateExpression(
 
 
   /*
-    multiplication / division
+    Multiplication / division
   */
 
   function parseTerm() {
@@ -725,7 +846,8 @@ function evaluateExpression(
 
 
     while (
-      position < tokens.length
+      position
+      < tokens.length
     ) {
 
       if (
@@ -737,6 +859,7 @@ function evaluateExpression(
 
       }
 
+
       else if (
         consume("/")
       ) {
@@ -746,7 +869,9 @@ function evaluateExpression(
 
 
         if (
-          Math.abs(denominator)
+          Math.abs(
+            denominator
+          )
           < 1e-14
         ) {
 
@@ -762,6 +887,7 @@ function evaluateExpression(
 
       }
 
+
       else {
 
         break;
@@ -777,7 +903,7 @@ function evaluateExpression(
 
 
   /*
-    Unary + and -
+    Unary +/-
   */
 
   function parseUnary() {
@@ -838,15 +964,7 @@ function evaluateExpression(
 
 
   /*
-    Numbers
-
-    x
-
-    constants
-
-    functions
-
-    parentheses
+    Primary expressions
   */
 
   function parsePrimary() {
@@ -871,7 +989,8 @@ function evaluateExpression(
     */
 
     if (
-      token.type === "number"
+      token.type
+      === "number"
     ) {
 
       position++;
@@ -914,7 +1033,8 @@ function evaluateExpression(
     */
 
     if (
-      token.type === "identifier"
+      token.type
+      === "identifier"
     ) {
 
       position++;
@@ -924,7 +1044,7 @@ function evaluateExpression(
 
 
       /*
-        variable x
+        x
       */
 
       if (
@@ -937,7 +1057,7 @@ function evaluateExpression(
 
 
       /*
-        constants
+        pi
       */
 
       if (
@@ -949,6 +1069,10 @@ function evaluateExpression(
       }
 
 
+      /*
+        e
+      */
+
       if (
         name === "e"
       ) {
@@ -959,7 +1083,7 @@ function evaluateExpression(
 
 
       /*
-        Mathematical functions
+        Allowed functions
       */
 
       const allowedFunctions = {
@@ -989,7 +1113,8 @@ function evaluateExpression(
 
 
       if (
-        name in allowedFunctions
+        name
+        in allowedFunctions
       ) {
 
         if (
@@ -1026,7 +1151,9 @@ function evaluateExpression(
 
 
         if (
-          !Number.isFinite(result)
+          !Number.isFinite(
+            result
+          )
         ) {
 
           throw new Error(
@@ -1061,7 +1188,8 @@ function evaluateExpression(
 
 
   if (
-    position !== tokens.length
+    position
+    !== tokens.length
   ) {
 
     throw new Error(
@@ -1072,7 +1200,9 @@ function evaluateExpression(
 
 
   if (
-    !Number.isFinite(result)
+    !Number.isFinite(
+      result
+    )
   ) {
 
     throw new Error(
@@ -1088,11 +1218,225 @@ function evaluateExpression(
 
 
 /* =========================================================
-   5. Initial condition
+   6. Discrete input parser
+   ========================================================= */
+
+function parseDiscreteInput() {
+
+  let text =
+    document
+      .getElementById(
+        "discreteInput"
+      )
+      .value;
+
+
+  /*
+    Allow:
+
+    0, 0.1, 0.2
+
+    or Excel column:
+
+    0
+    0.1
+    0.2
+
+    or spaces:
+
+    0 0.1 0.2
+
+    Also tolerate brackets.
+  */
+
+  text =
+    text
+      .replace(
+        /\[/g,
+        " "
+      )
+      .replace(
+        /\]/g,
+        " "
+      )
+      .replace(
+        /;/g,
+        " "
+      )
+      .trim();
+
+
+  if (
+    text.length === 0
+  ) {
+
+    throw new Error(
+      "No discrete values entered."
+    );
+
+  }
+
+
+  const parts =
+    text
+      .split(
+        /[\s,]+/
+      )
+      .filter(
+        value =>
+          value.length > 0
+      );
+
+
+  if (
+    parts.length
+    !== N + 1
+  ) {
+
+    throw new Error(
+
+      "Expected "
+      + (N + 1)
+      + " values, but found "
+      + parts.length
+      + "."
+
+    );
+
+  }
+
+
+  const values =
+    parts.map(
+
+      function (
+        item,
+        index
+      ) {
+
+        const value =
+          Number(item);
+
+
+        if (
+          !Number.isFinite(
+            value
+          )
+        ) {
+
+          throw new Error(
+
+            "Invalid number at position "
+            + (index + 1)
+            + ": "
+            + item
+
+          );
+
+        }
+
+
+        return value;
+
+      }
+
+    );
+
+
+  return values;
+
+}
+
+
+/* =========================================================
+   7. Count discrete values
+   ========================================================= */
+
+function updateDiscreteCount() {
+
+  let text =
+    document
+      .getElementById(
+        "discreteInput"
+      )
+      .value;
+
+
+  text =
+    text
+      .replace(
+        /\[/g,
+        " "
+      )
+      .replace(
+        /\]/g,
+        " "
+      )
+      .replace(
+        /;/g,
+        " "
+      )
+      .trim();
+
+
+  let count = 0;
+
+
+  if (
+    text.length > 0
+  ) {
+
+    count =
+      text
+        .split(
+          /[\s,]+/
+        )
+        .filter(
+          value =>
+            value.length > 0
+        )
+        .length;
+
+  }
+
+
+  const countDisplay =
+    document
+      .getElementById(
+        "discreteCount"
+      );
+
+
+  countDisplay.textContent =
+    count;
+
+
+  if (
+    count === N + 1
+  ) {
+
+    countDisplay.style.color =
+      "#087a22";
+
+  }
+
+  else {
+
+    countDisplay.style.color =
+      "#cc0000";
+
+  }
+
+}
+
+
+/* =========================================================
+   8. Initial condition function
    ========================================================= */
 
 function initialFunction(
-  xValue
+  xValue,
+  index
 ) {
 
   const type =
@@ -1104,7 +1448,7 @@ function initialFunction(
 
 
   /* ---------------------------------------------------------
-     1. Sine
+     1. sine
      --------------------------------------------------------- */
 
   if (
@@ -1112,23 +1456,27 @@ function initialFunction(
   ) {
 
     return Math.sin(
-      Math.PI * xValue
+      Math.PI
+      * xValue
     );
 
   }
 
 
   /* ---------------------------------------------------------
-     2. Plucked string
+     2. plucked string
      --------------------------------------------------------- */
 
   if (
     type === "pluck"
   ) {
 
-    const x0 = 0.35;
+    const x0 =
+      0.35;
 
-    const A = 1.0;
+
+    const A =
+      1.0;
 
 
     if (
@@ -1142,6 +1490,7 @@ function initialFunction(
       );
 
     }
+
 
     else {
 
@@ -1157,18 +1506,23 @@ function initialFunction(
 
 
   /* ---------------------------------------------------------
-     3. Gaussian pulse
+     3. Gaussian
      --------------------------------------------------------- */
 
   if (
     type === "gaussian"
   ) {
 
-    const A = 1.0;
+    const A =
+      1.0;
 
-    const x0 = 0.5;
 
-    const sigma = 0.08;
+    const x0 =
+      0.5;
+
+
+    const sigma =
+      0.08;
 
 
     return (
@@ -1202,7 +1556,7 @@ function initialFunction(
 
 
   /* ---------------------------------------------------------
-     4. Custom function
+     4. custom analytic function
      --------------------------------------------------------- */
 
   if (
@@ -1225,13 +1579,38 @@ function initialFunction(
   }
 
 
+  /* ---------------------------------------------------------
+     5. discrete
+     --------------------------------------------------------- */
+
+  if (
+    type === "discrete"
+  ) {
+
+    return discreteValues[
+      index
+    ];
+
+  }
+
+
   return 0;
 
 }
 
 
 /* =========================================================
-   6. Initial condition UI
+   9. Current discrete data
+   ========================================================= */
+
+let discreteValues =
+  new Array(
+    N + 1
+  ).fill(0);
+
+
+/* =========================================================
+   10. UI descriptions
    ========================================================= */
 
 function updateDescription() {
@@ -1258,15 +1637,27 @@ function updateDescription() {
       );
 
 
+  const discreteBox =
+    document
+      .getElementById(
+        "discreteBox"
+      );
+
+
+  customBox.style.display =
+    "none";
+
+
+  discreteBox.style.display =
+    "none";
+
+
   if (
     type === "sine"
   ) {
 
     description.textContent =
-      "Initial displacement: f(x) = sin(πx), initial velocity: g(x) = 0";
-
-    customBox.style.display =
-      "none";
+      "Analytic initial displacement f(x) = sin(πx). Initial velocity g(x) = 0.";
 
   }
 
@@ -1276,10 +1667,7 @@ function updateDescription() {
   ) {
 
     description.textContent =
-      "Triangular initial displacement with peak at x = 0.35, initial velocity: g(x) = 0";
-
-    customBox.style.display =
-      "none";
+      "Triangular plucked-string initial displacement with peak at x = 0.35. Initial velocity g(x) = 0.";
 
   }
 
@@ -1289,10 +1677,7 @@ function updateDescription() {
   ) {
 
     description.textContent =
-      "Gaussian initial displacement centered at x = 0.5, initial velocity: g(x) = 0";
-
-    customBox.style.display =
-      "none";
+      "Gaussian initial displacement centered at x = 0.5. Initial velocity g(x) = 0.";
 
   }
 
@@ -1302,10 +1687,28 @@ function updateDescription() {
   ) {
 
     description.textContent =
-      "Enter a mathematical expression for the initial displacement f(x). Initial velocity: g(x) = 0";
+      "Enter an analytic mathematical expression f(x). Initial velocity g(x) = 0.";
+
 
     customBox.style.display =
       "block";
+
+  }
+
+
+  else if (
+    type === "discrete"
+  ) {
+
+    description.textContent =
+      "Directly specify the displacement at all 101 spatial grid points.";
+
+
+    discreteBox.style.display =
+      "block";
+
+
+    updateDiscreteCount();
 
   }
 
@@ -1313,36 +1716,75 @@ function updateDescription() {
 
 
 /* =========================================================
-   7. Initialize simulation
+   11. Initialize simulation
    ========================================================= */
 
 function initializeWave() {
 
-  time = 0;
+  time =
+    0;
 
-  firstStepPending = true;
+
+  firstStepPending =
+    true;
 
 
-  const errorDisplay =
+  const customError =
     document
       .getElementById(
         "customError"
       );
 
 
-  errorDisplay.textContent =
+  const discreteError =
+    document
+      .getElementById(
+        "discreteError"
+      );
+
+
+  customError.textContent =
     "";
 
-  errorDisplay.className =
+
+  discreteError.textContent =
+    "";
+
+
+  customError.className =
     "error";
+
+
+  discreteError.className =
+    "error";
+
+
+  const type =
+    document
+      .getElementById(
+        "initialCondition"
+      )
+      .value;
 
 
   try {
 
     /*
-      Initial displacement
+      Parse discrete data first.
+    */
 
-      u(x,0) = f(x)
+    if (
+      type === "discrete"
+    ) {
+
+      discreteValues =
+        parseDiscreteInput();
+
+    }
+
+
+    /*
+      Evaluate initial displacement.
     */
 
     for (
@@ -1353,24 +1795,31 @@ function initializeWave() {
 
       uCurr[i] =
         initialFunction(
-          x[i]
+          x[i],
+          i
         );
 
     }
 
 
     /*
-      Fixed boundary conditions
+      Fixed boundary conditions:
 
       u(0,t) = 0
-
       u(L,t) = 0
     */
 
-    uCurr[0] = 0;
+    uCurr[0] =
+      0;
 
-    uCurr[N] = 0;
 
+    uCurr[N] =
+      0;
+
+
+    /*
+      Previous state
+    */
 
     uPrev =
       [...uCurr];
@@ -1390,24 +1839,36 @@ function initializeWave() {
         time.toFixed(3);
 
 
-    updateDescription();
-
     drawWave();
 
 
+    /*
+      Success messages
+    */
+
     if (
-      document
-        .getElementById(
-          "initialCondition"
-        )
-        .value
-      === "custom"
+      type === "custom"
     ) {
 
-      errorDisplay.textContent =
+      customError.textContent =
         "Function applied successfully.";
 
-      errorDisplay.className =
+
+      customError.className =
+        "error success";
+
+    }
+
+
+    if (
+      type === "discrete"
+    ) {
+
+      discreteError.textContent =
+        "101 samples applied successfully. Boundary values at x = 0 and x = 1 are fixed to zero.";
+
+
+      discreteError.className =
         "error success";
 
     }
@@ -1419,20 +1880,44 @@ function initializeWave() {
     error
   ) {
 
-    running = false;
+    running =
+      false;
 
 
-    errorDisplay.textContent =
-      "Error: "
-      + error.message;
+    if (
+      type === "custom"
+    ) {
+
+      customError.textContent =
+        "Error: "
+        + error.message;
+
+    }
+
+
+    else if (
+      type === "discrete"
+    ) {
+
+      discreteError.textContent =
+        "Error: "
+        + error.message;
+
+    }
+
+
+    return false;
 
   }
+
+
+  return true;
 
 }
 
 
 /* =========================================================
-   8. Numerical solver
+   12. Numerical wave solver
    ========================================================= */
 
 function updateWave() {
@@ -1442,18 +1927,17 @@ function updateWave() {
 
 
   /*
-    First time step
+    First time step:
 
-    u_i^1
+    u_i^1 =
+        u_i^0
+        + Δt g_i
+        + (1/2) r²
+          (u_{i+1}^0 - 2u_i^0 + u_{i-1}^0)
 
-    = u_i^0
-    + Δt g_i
-    + 1/2 r²
-      (u_{i+1}^0 - 2u_i^0 + u_{i-1}^0)
+    Currently:
 
-    Here
-
-    g(x) = 0
+        g(x) = 0
   */
 
   if (
@@ -1490,13 +1974,17 @@ function updateWave() {
     }
 
 
-    uNext[0] = 0;
+    uNext[0] =
+      0;
 
-    uNext[N] = 0;
+
+    uNext[N] =
+      0;
 
 
     uPrev =
       [...uCurr];
+
 
     uCurr =
       [...uNext];
@@ -1516,7 +2004,7 @@ function updateWave() {
 
 
   /*
-    Standard finite difference update
+    Standard finite difference equation:
 
     u_i^(n+1)
 
@@ -1527,11 +2015,10 @@ function updateWave() {
 
     +
 
-    r²
-    (
-      u_(i+1)^n
-      - 2u_i^n
-      + u_(i-1)^n
+    r²(
+        u_(i+1)^n
+        - 2u_i^n
+        + u_(i-1)^n
     )
   */
 
@@ -1570,20 +2057,24 @@ function updateWave() {
 
 
   /*
-    Fixed endpoints
+    Fixed boundaries
   */
 
-  uNext[0] = 0;
+  uNext[0] =
+    0;
 
-  uNext[N] = 0;
+
+  uNext[N] =
+    0;
 
 
   /*
-    Advance time
+    Advance state
   */
 
   uPrev =
     [...uCurr];
+
 
   uCurr =
     [...uNext];
@@ -1596,7 +2087,7 @@ function updateWave() {
 
 
 /* =========================================================
-   9. Canvas
+   13. Canvas
    ========================================================= */
 
 const canvas =
@@ -1614,13 +2105,14 @@ const ctx =
 
 
 /* =========================================================
-   10. Draw graph
+   14. Draw graph
    ========================================================= */
 
 function drawWave() {
 
   const width =
     canvas.width;
+
 
   const height =
     canvas.height;
@@ -1641,34 +2133,40 @@ function drawWave() {
   const marginLeft =
     65;
 
+
   const marginRight =
     30;
 
+
   const marginTop =
     30;
+
 
   const marginBottom =
     55;
 
 
   const plotWidth =
+
     width
+
     - marginLeft
+
     - marginRight;
 
 
   const plotHeight =
+
     height
+
     - marginTop
+
     - marginBottom;
 
 
-  /*
-    Dynamic y-axis range
-
-    기본 범위는 ±1.2이고
-    custom function이 더 크면 자동 확장
-  */
+  /* ---------------------------------------------------------
+     Dynamic y range
+     --------------------------------------------------------- */
 
   let maxAmplitude =
     1;
@@ -1688,10 +2186,13 @@ function drawWave() {
 
       maxAmplitude =
         Math.max(
+
           maxAmplitude,
+
           Math.abs(
             uCurr[i]
           )
+
         );
 
     }
@@ -1701,20 +2202,25 @@ function drawWave() {
 
   const yRange =
     Math.max(
+
       1.2,
-      maxAmplitude * 1.2
+
+      maxAmplitude
+      * 1.2
+
     );
 
 
   const yMin =
     -yRange;
 
+
   const yMax =
     yRange;
 
 
   /* ---------------------------------------------------------
-     Coordinate transform
+     Coordinate conversion
      --------------------------------------------------------- */
 
   function xToPixel(
@@ -1747,13 +2253,15 @@ function drawWave() {
       +
 
       (
-        yMax - yValue
+        yMax
+        - yValue
       )
 
       /
 
       (
-        yMax - yMin
+        yMax
+        - yMin
       )
 
       *
@@ -1766,7 +2274,7 @@ function drawWave() {
 
 
   /* ---------------------------------------------------------
-     Plot background
+     Background
      --------------------------------------------------------- */
 
   ctx.fillStyle =
@@ -1787,6 +2295,7 @@ function drawWave() {
 
   ctx.strokeStyle =
     "#e6e6e6";
+
 
   ctx.lineWidth =
     1;
@@ -1810,15 +2319,19 @@ function drawWave() {
 
     ctx.beginPath();
 
+
     ctx.moveTo(
       px,
       marginTop
     );
 
+
     ctx.lineTo(
       px,
-      marginTop + plotHeight
+      marginTop
+      + plotHeight
     );
+
 
     ctx.stroke();
 
@@ -1857,15 +2370,19 @@ function drawWave() {
 
     ctx.beginPath();
 
+
     ctx.moveTo(
       marginLeft,
       py
     );
 
+
     ctx.lineTo(
-      marginLeft + plotWidth,
+      marginLeft
+      + plotWidth,
       py
     );
+
 
     ctx.stroke();
 
@@ -1873,11 +2390,12 @@ function drawWave() {
 
 
   /* ---------------------------------------------------------
-     Border
+     Plot border
      --------------------------------------------------------- */
 
   ctx.strokeStyle =
     "#777";
+
 
   ctx.lineWidth =
     1;
@@ -1892,7 +2410,7 @@ function drawWave() {
 
 
   /* ---------------------------------------------------------
-     x axis = u = 0
+     x axis
      --------------------------------------------------------- */
 
   const zeroY =
@@ -1901,6 +2419,7 @@ function drawWave() {
 
   ctx.strokeStyle =
     "#555";
+
 
   ctx.lineWidth =
     1.4;
@@ -1916,7 +2435,8 @@ function drawWave() {
 
 
   ctx.lineTo(
-    marginLeft + plotWidth,
+    marginLeft
+    + plotWidth,
     zeroY
   );
 
@@ -1925,17 +2445,20 @@ function drawWave() {
 
 
   /* ---------------------------------------------------------
-     x tick labels
+     x-axis labels
      --------------------------------------------------------- */
 
   ctx.fillStyle =
     "#333";
 
+
   ctx.font =
     "13px Arial";
 
+
   ctx.textAlign =
     "center";
+
 
   ctx.textBaseline =
     "top";
@@ -1958,22 +2481,27 @@ function drawWave() {
 
 
     ctx.fillText(
+
       xValue.toFixed(1),
+
       px,
+
       marginTop
       + plotHeight
       + 8
+
     );
 
   }
 
 
   /* ---------------------------------------------------------
-     y tick labels
+     y-axis labels
      --------------------------------------------------------- */
 
   ctx.textAlign =
     "right";
+
 
   ctx.textBaseline =
     "middle";
@@ -1991,9 +2519,13 @@ function drawWave() {
 
 
     ctx.fillText(
+
       yValue.toFixed(2),
+
       marginLeft - 9,
+
       py
+
     );
 
   }
@@ -2006,6 +2538,7 @@ function drawWave() {
   ctx.fillStyle =
     "#111";
 
+
   ctx.font =
     "15px Arial";
 
@@ -2013,15 +2546,20 @@ function drawWave() {
   ctx.textAlign =
     "center";
 
+
   ctx.textBaseline =
     "bottom";
 
 
   ctx.fillText(
+
     "x",
+
     marginLeft
     + plotWidth / 2,
+
     height - 5
+
   );
 
 
@@ -2029,9 +2567,12 @@ function drawWave() {
 
 
   ctx.translate(
+
     18,
+
     marginTop
     + plotHeight / 2
+
   );
 
 
@@ -2042,6 +2583,7 @@ function drawWave() {
 
   ctx.textAlign =
     "center";
+
 
   ctx.textBaseline =
     "middle";
@@ -2058,11 +2600,12 @@ function drawWave() {
 
 
   /* ---------------------------------------------------------
-     Wave
+     Wave curve
      --------------------------------------------------------- */
 
   ctx.strokeStyle =
     "#0066cc";
+
 
   ctx.lineWidth =
     3;
@@ -2100,6 +2643,7 @@ function drawWave() {
 
     }
 
+
     else {
 
       ctx.lineTo(
@@ -2116,16 +2660,69 @@ function drawWave() {
 
 
   /* ---------------------------------------------------------
-     Fixed boundary points
+     Show grid samples as dots in discrete mode
+     --------------------------------------------------------- */
+
+  const type =
+    document
+      .getElementById(
+        "initialCondition"
+      )
+      .value;
+
+
+  if (
+    type === "discrete"
+    &&
+    time === 0
+  ) {
+
+    ctx.fillStyle =
+      "#0066cc";
+
+
+    for (
+      let i = 0;
+      i <= N;
+      i++
+    ) {
+
+      ctx.beginPath();
+
+
+      ctx.arc(
+
+        xToPixel(
+          x[i]
+        ),
+
+        yToPixel(
+          uCurr[i]
+        ),
+
+        2.5,
+
+        0,
+
+        2 * Math.PI
+
+      );
+
+
+      ctx.fill();
+
+    }
+
+  }
+
+
+  /* ---------------------------------------------------------
+     Fixed endpoints
      --------------------------------------------------------- */
 
   ctx.fillStyle =
     "#d00000";
 
-
-  /*
-    x = 0
-  */
 
   ctx.beginPath();
 
@@ -2141,10 +2738,6 @@ function drawWave() {
 
   ctx.fill();
 
-
-  /*
-    x = L
-  */
 
   ctx.beginPath();
 
@@ -2164,17 +2757,12 @@ function drawWave() {
 
 
 /* =========================================================
-   11. Animation
+   15. Animation
    ========================================================= */
 
 let running =
   false;
 
-
-/*
-  Number of numerical time steps
-  performed for each screen frame.
-*/
 
 const stepsPerFrame =
   2;
@@ -2221,7 +2809,7 @@ function animate() {
 
 
 /* =========================================================
-   12. Play / Pause / Reset
+   16. Main buttons
    ========================================================= */
 
 document
@@ -2276,6 +2864,7 @@ document
       running =
         false;
 
+
       initializeWave();
 
     }
@@ -2283,7 +2872,7 @@ document
 
 
 /* =========================================================
-   13. Initial condition selector
+   17. Initial condition selector
    ========================================================= */
 
 document
@@ -2301,14 +2890,36 @@ document
       updateDescription();
 
 
-      initializeWave();
+      const type =
+        this.value;
+
+
+      /*
+        Don't immediately initialize empty
+        discrete input.
+      */
+
+      if (
+        type !== "discrete"
+      ) {
+
+        initializeWave();
+
+      }
+
+
+      else {
+
+        drawWave();
+
+      }
 
     }
   );
 
 
 /* =========================================================
-   14. Apply custom function
+   18. Custom function Apply
    ========================================================= */
 
 document
@@ -2330,7 +2941,7 @@ document
 
 
 /*
-  Enter key also applies function
+  Press Enter to apply.
 */
 
 document
@@ -2360,7 +2971,185 @@ document
 
 
 /* =========================================================
-   15. Parameter display
+   19. Discrete Apply
+   ========================================================= */
+
+document
+  .getElementById(
+    "applyDiscreteButton"
+  )
+  .addEventListener(
+    "click",
+    function () {
+
+      running =
+        false;
+
+
+      initializeWave();
+
+    }
+  );
+
+
+/* =========================================================
+   20. Update discrete count while typing
+   ========================================================= */
+
+document
+  .getElementById(
+    "discreteInput"
+  )
+  .addEventListener(
+    "input",
+    function () {
+
+      updateDiscreteCount();
+
+    }
+  );
+
+
+/* =========================================================
+   21. Clear discrete values
+   ========================================================= */
+
+document
+  .getElementById(
+    "clearDiscreteButton"
+  )
+  .addEventListener(
+    "click",
+    function () {
+
+      running =
+        false;
+
+
+      document
+        .getElementById(
+          "discreteInput"
+        )
+        .value =
+          "";
+
+
+      document
+        .getElementById(
+          "discreteError"
+        )
+        .textContent =
+          "";
+
+
+      updateDiscreteCount();
+
+    }
+  );
+
+
+/* =========================================================
+   22. Generate discrete Gaussian example
+   ========================================================= */
+
+document
+  .getElementById(
+    "exampleDiscreteButton"
+  )
+  .addEventListener(
+    "click",
+    function () {
+
+      const values = [];
+
+
+      const center =
+        0.35;
+
+
+      const sigma =
+        0.06;
+
+
+      for (
+        let i = 0;
+        i <= N;
+        i++
+      ) {
+
+        const xi =
+          x[i];
+
+
+        let value =
+          Math.exp(
+
+            -
+
+            Math.pow(
+              xi - center,
+              2
+            )
+
+            /
+
+            (
+              2
+              * sigma
+              * sigma
+            )
+
+          );
+
+
+        /*
+          Fixed boundary
+        */
+
+        if (
+          i === 0
+          ||
+          i === N
+        ) {
+
+          value =
+            0;
+
+        }
+
+
+        values.push(
+          value.toFixed(6)
+        );
+
+      }
+
+
+      document
+        .getElementById(
+          "discreteInput"
+        )
+        .value =
+          values.join(
+            "\n"
+          );
+
+
+      updateDiscreteCount();
+
+
+      running =
+        false;
+
+
+      initializeWave();
+
+    }
+  );
+
+
+/* =========================================================
+   23. Parameter display
    ========================================================= */
 
 document
@@ -2377,6 +3166,14 @@ document
   )
   .textContent =
     N;
+
+
+document
+  .getElementById(
+    "nodeDisplay"
+  )
+  .textContent =
+    N + 1;
 
 
 document
@@ -2419,7 +3216,7 @@ document
 
 
 /* =========================================================
-   16. Start
+   24. Start
    ========================================================= */
 
 updateDescription();
