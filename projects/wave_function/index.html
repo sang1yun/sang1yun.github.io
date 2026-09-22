@@ -11,9 +11,10 @@
     body {
       font-family: Arial, sans-serif;
       max-width: 1000px;
-      margin: 20px auto;
+      margin: 30px auto;
       padding: 0 20px;
-      background: #f7f7f7;
+      background: #f5f5f5;
+      color: #222;
     }
 
     h1 {
@@ -21,51 +22,70 @@
       margin-bottom: 8px;
     }
 
+    h2 {
+      margin-top: 0;
+    }
+
     .equation {
       text-align: center;
       font-size: 20px;
-      margin-bottom: 20px;
+      margin-bottom: 22px;
     }
 
     .panel {
       background: white;
       padding: 20px;
+      margin-bottom: 16px;
       border-radius: 10px;
-      margin-top: 15px;
     }
 
     canvas {
+      display: block;
+
       width: 100%;
-      height: 400px;
-      border: 1px solid #aaa;
+      height: auto;
+
       background: white;
+      border: 1px solid #bbb;
     }
 
     button {
-      padding: 8px 16px;
-      margin-right: 6px;
+      padding: 9px 18px;
+      margin-right: 7px;
       font-size: 14px;
       cursor: pointer;
     }
 
     select {
-      padding: 6px;
+      padding: 7px;
+      font-size: 14px;
+    }
+
+    .controls {
+      margin-top: 16px;
+    }
+
+    .status {
+      margin-top: 14px;
+      font-family: monospace;
+      font-size: 14px;
     }
 
     .parameter-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      max-width: 400px;
+      grid-template-columns: 170px 150px;
       gap: 8px;
-    }
-
-    .status {
-      margin-top: 10px;
       font-family: monospace;
     }
 
     .stable {
       font-weight: bold;
+    }
+
+    .description {
+      color: #555;
+      font-size: 14px;
+      line-height: 1.6;
     }
   </style>
 </head>
@@ -80,6 +100,10 @@
   </div>
 
 
+  <!-- =========================
+       Simulation
+       ========================= -->
+
   <div class="panel">
 
     <h2>Simulation</h2>
@@ -87,22 +111,43 @@
     <canvas
       id="waveCanvas"
       width="900"
-      height="400">
+      height="440">
     </canvas>
 
-    <br><br>
 
-    <button id="playButton">Play</button>
-    <button id="pauseButton">Pause</button>
-    <button id="resetButton">Reset</button>
+    <div class="controls">
+
+      <button id="playButton">
+        Play
+      </button>
+
+      <button id="pauseButton">
+        Pause
+      </button>
+
+      <button id="resetButton">
+        Reset
+      </button>
+
+    </div>
+
 
     <div class="status">
-      Time:
-      <span id="timeDisplay">0.000</span> s
+
+      Time =
+      <span id="timeDisplay">
+        0.000
+      </span>
+      s
+
     </div>
 
   </div>
 
+
+  <!-- =========================
+       Parameters
+       ========================= -->
 
   <div class="panel">
 
@@ -126,19 +171,26 @@
       <div id="dtDisplay"></div>
 
       <div>CFL number</div>
-      <div class="stable" id="cflDisplay"></div>
+      <div
+        id="cflDisplay"
+        class="stable">
+      </div>
 
     </div>
 
   </div>
 
 
+  <!-- =========================
+       Initial condition
+       ========================= -->
+
   <div class="panel">
 
     <h2>Initial Condition</h2>
 
     <p>
-      u(x,0) = f(x)
+      u(x, 0) = f(x)
     </p>
 
     <select id="initialCondition">
@@ -157,123 +209,268 @@
 
     </select>
 
+    <p
+      id="initialDescription"
+      class="description">
+    </p>
+
   </div>
 
 
 <script>
 
 /* =========================================================
-   1. Physical / Numerical Parameters
+   1. Physical / numerical parameters
    ========================================================= */
 
 const L = 1.0;
+
+/*
+  interval 개수
+
+  N = 100 이므로
+  node는 101개:
+
+  x_0, x_1, ..., x_100
+*/
+
 const N = 100;
 
 const dx = L / N;
 
-const c = 1.0;
 
 /*
-  CFL condition for 1D wave equation:
+  wave speed
+*/
 
-      c * dt / dx <= 1
+const c = 1.0;
 
-  여기서는 안정성을 위해 CFL = 0.8 사용
+
+/*
+  CFL condition:
+
+      c Δt / Δx <= 1
+
+  안정성을 위해 0.8 사용
 */
 
 const CFL = 0.8;
 
-const dt = CFL * dx / c;
+const dt =
+  CFL * dx / c;
 
 
 /* =========================================================
-   2. Grid
+   2. Spatial grid
    ========================================================= */
 
-/*
-   x = 0 ~ L 을 N등분하면
-   node 개수는 N+1개
-*/
+const x =
+  new Array(N + 1);
 
-const x = new Array(N + 1);
+for (
+  let i = 0;
+  i <= N;
+  i++
+) {
 
-for (let i = 0; i <= N; i++) {
-
-  x[i] = i * dx;
+  x[i] =
+    i * dx;
 
 }
 
 
 /* =========================================================
-   3. Wave Arrays
+   3. Wave arrays
    ========================================================= */
 
 /*
-   uPrev : 이전 시간
-   uCurr : 현재 시간
-   uNext : 다음 시간
+  uPrev = u at previous time
+
+  uCurr = u at current time
+
+  uNext = u at next time
 */
 
-let uPrev = new Array(N + 1).fill(0);
-let uCurr = new Array(N + 1).fill(0);
-let uNext = new Array(N + 1).fill(0);
+let uPrev =
+  new Array(N + 1).fill(0);
+
+let uCurr =
+  new Array(N + 1).fill(0);
+
+let uNext =
+  new Array(N + 1).fill(0);
+
+
+/*
+  simulation time
+*/
+
+let time = 0;
+
+
+/*
+  첫 time step인지 여부
+
+  t = 0에서는
+  initial velocity를 이용한 별도 공식이 필요하다.
+*/
+
+let firstStepPending = true;
 
 
 /* =========================================================
-   4. Initial Condition
+   4. Initial condition
    ========================================================= */
 
 function initialFunction(xValue) {
 
   const type =
-    document.getElementById("initialCondition").value;
+    document
+    .getElementById(
+      "initialCondition"
+    )
+    .value;
 
 
-  /* sin(pi x) */
+  /* -----------------------------------------
+     1. Sine
+     ----------------------------------------- */
 
-  if (type === "sine") {
+  if (
+    type === "sine"
+  ) {
 
-    return Math.sin(Math.PI * xValue);
+    return Math.sin(
+      Math.PI * xValue
+    );
 
   }
 
 
-  /* Plucked String */
+  /* -----------------------------------------
+     2. Plucked string
+     ----------------------------------------- */
 
-  if (type === "pluck") {
+  if (
+    type === "pluck"
+  ) {
 
     const x0 = 0.35;
+
     const A = 1.0;
 
-    if (xValue <= x0) {
 
-      return A * xValue / x0;
+    if (
+      xValue <= x0
+    ) {
+
+      return (
+        A * xValue / x0
+      );
 
     }
 
     else {
 
-      return A * (L - xValue) / (L - x0);
+      return (
+        A
+        * (L - xValue)
+        / (L - x0)
+      );
 
     }
 
   }
 
 
-  /* Gaussian Pulse */
+  /* -----------------------------------------
+     3. Gaussian pulse
+     ----------------------------------------- */
 
-  if (type === "gaussian") {
+  if (
+    type === "gaussian"
+  ) {
 
     const A = 1.0;
+
     const x0 = 0.5;
+
     const sigma = 0.08;
 
-    return A *
-      Math.exp(
-        -Math.pow(xValue - x0, 2)
+
+    return (
+      A
+      * Math.exp(
+
+        - Math.pow(
+            xValue - x0,
+            2
+          )
+
         /
-        (2 * sigma * sigma)
-      );
+        (
+          2
+          * sigma
+          * sigma
+        )
+
+      )
+    );
+
+  }
+
+
+  return 0;
+
+}
+
+
+/* =========================================================
+   5. Initial condition description
+   ========================================================= */
+
+function updateDescription() {
+
+  const type =
+    document
+    .getElementById(
+      "initialCondition"
+    )
+    .value;
+
+  const description =
+    document
+    .getElementById(
+      "initialDescription"
+    );
+
+
+  if (
+    type === "sine"
+  ) {
+
+    description.textContent =
+      "Initial displacement: f(x) = sin(πx), initial velocity: g(x) = 0";
+
+  }
+
+
+  if (
+    type === "pluck"
+  ) {
+
+    description.textContent =
+      "Triangular initial displacement with peak at x = 0.35, initial velocity: g(x) = 0";
+
+  }
+
+
+  if (
+    type === "gaussian"
+  ) {
+
+    description.textContent =
+      "Gaussian initial displacement centered at x = 0.5, initial velocity: g(x) = 0";
 
   }
 
@@ -281,103 +478,191 @@ function initialFunction(xValue) {
 
 
 /* =========================================================
-   5. Initialize Simulation
+   6. Initialize simulation
    ========================================================= */
-
-let time = 0;
 
 function initializeWave() {
 
   time = 0;
 
-  /*
-     Initial displacement
-
-         u(x,0) = f(x)
-  */
-
-  for (let i = 0; i <= N; i++) {
-
-    uCurr[i] = initialFunction(x[i]);
-
-  }
+  firstStepPending = true;
 
 
   /*
-     Fixed boundary condition
+    initial displacement
 
-         u(0,t) = 0
-         u(L,t) = 0
+        u(x,0) = f(x)
   */
 
-  uCurr[0] = 0;
-  uCurr[N] = 0;
+  for (
+    let i = 0;
+    i <= N;
+    i++
+  ) {
 
-
-  /*
-     Initial velocity
-
-         g(x) = 0
-
-     First time step:
-
-     u_i^1 =
-       u_i^0
-       + dt * g_i
-       + 1/2 r²
-       (u_{i+1} - 2u_i + u_{i-1})
-
-     g_i = 0
-  */
-
-  const r = c * dt / dx;
-
-  uPrev = [...uCurr];
-
-  let firstStep = new Array(N + 1).fill(0);
-
-  for (let i = 1; i < N; i++) {
-
-    firstStep[i] =
-      uCurr[i]
-      +
-      0.5 * r * r *
-      (
-        uCurr[i + 1]
-        - 2 * uCurr[i]
-        + uCurr[i - 1]
+    uCurr[i] =
+      initialFunction(
+        x[i]
       );
 
   }
 
-  firstStep[0] = 0;
-  firstStep[N] = 0;
 
-  uCurr = firstStep;
+  /*
+    Fixed boundary condition
+
+        u(0,t) = 0
+        u(L,t) = 0
+  */
+
+  uCurr[0] = 0;
+
+  uCurr[N] = 0;
+
+
+  /*
+    이전 배열도 현재 초기상태로 초기화
+  */
+
+  uPrev =
+    [...uCurr];
+
+  uNext =
+    new Array(
+      N + 1
+    ).fill(0);
+
+
+  document
+    .getElementById(
+      "timeDisplay"
+    )
+    .textContent =
+      time.toFixed(3);
+
+
+  updateDescription();
 
   drawWave();
-
-  document.getElementById("timeDisplay")
-    .textContent = time.toFixed(3);
 
 }
 
 
 /* =========================================================
-   6. Finite Difference Solver
+   7. Numerical solver
    ========================================================= */
 
 function updateWave() {
 
-  const r = c * dt / dx;
+  const r =
+    c * dt / dx;
 
-  for (let i = 1; i < N; i++) {
+
+  /*
+    첫 번째 time step
+
+    Taylor expansion:
+
+    u_i^1 =
+      u_i^0
+      + Δt g_i
+      + 1/2 r²
+        (u_{i+1}^0
+        - 2u_i^0
+        + u_{i-1}^0)
+
+    현재는
+
+      g(x) = 0
+  */
+
+  if (
+    firstStepPending
+  ) {
+
+    for (
+      let i = 1;
+      i < N;
+      i++
+    ) {
+
+      uNext[i] =
+
+        uCurr[i]
+
+        +
+
+        0.5
+        * r
+        * r
+
+        *
+        (
+          uCurr[i + 1]
+          - 2 * uCurr[i]
+          + uCurr[i - 1]
+        );
+
+    }
+
+
+    uNext[0] = 0;
+
+    uNext[N] = 0;
+
+
+    uPrev =
+      [...uCurr];
+
+    uCurr =
+      [...uNext];
+
+
+    firstStepPending = false;
+
+    time = dt;
+
+    return;
+
+  }
+
+
+  /*
+    일반적인 finite difference update
+
+    u_i^{n+1}
+
+    =
+    2u_i^n
+    - u_i^{n-1}
+
+    +
+    r²
+    (
+      u_{i+1}^n
+      - 2u_i^n
+      + u_{i-1}^n
+    )
+  */
+
+  for (
+    let i = 1;
+    i < N;
+    i++
+  ) {
 
     uNext[i] =
+
       2 * uCurr[i]
+
       - uPrev[i]
+
       +
-      r * r *
+
+      r
+      * r
+
+      *
       (
         uCurr[i + 1]
         - 2 * uCurr[i]
@@ -388,19 +673,24 @@ function updateWave() {
 
 
   /*
-     fixed endpoints
+    fixed endpoints
   */
 
   uNext[0] = 0;
+
   uNext[N] = 0;
 
 
   /*
-     shift time levels
+    advance time
   */
 
-  uPrev = [...uCurr];
-  uCurr = [...uNext];
+  uPrev =
+    [...uCurr];
+
+  uCurr =
+    [...uNext];
+
 
   time += dt;
 
@@ -408,75 +698,130 @@ function updateWave() {
 
 
 /* =========================================================
-   7. Canvas Drawing
+   8. Canvas
    ========================================================= */
 
 const canvas =
-  document.getElementById("waveCanvas");
+  document
+  .getElementById(
+    "waveCanvas"
+  );
 
 const ctx =
-  canvas.getContext("2d");
+  canvas
+  .getContext(
+    "2d"
+  );
 
+
+/* =========================================================
+   9. Draw graph
+   ========================================================= */
 
 function drawWave() {
 
-  const width = canvas.width;
-  const height = canvas.height;
+  const width =
+    canvas.width;
 
-  ctx.clearRect(0, 0, width, height);
-
-
-  /* =========================================
-     Plot settings
-     ========================================= */
-
-  const marginLeft = 55;
-  const marginRight = 25;
-  const marginTop = 25;
-  const marginBottom = 45;
-
-  const plotWidth =
-    width - marginLeft - marginRight;
-
-  const plotHeight =
-    height - marginTop - marginBottom;
+  const height =
+    canvas.height;
 
 
   /*
-     y-axis range
+    clear canvas
+  */
 
-     현재 initial conditions의 amplitude가
-     대략 ±1이므로 -1.2 ~ 1.2로 고정
+  ctx.clearRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+
+  /* -----------------------------------------
+     Plot dimensions
+     ----------------------------------------- */
+
+  const marginLeft = 65;
+
+  const marginRight = 30;
+
+  const marginTop = 30;
+
+  const marginBottom = 55;
+
+
+  const plotWidth =
+    width
+    - marginLeft
+    - marginRight;
+
+
+  const plotHeight =
+    height
+    - marginTop
+    - marginBottom;
+
+
+  /*
+    fixed y-axis range
   */
 
   const yMin = -1.2;
+
   const yMax = 1.2;
 
 
-  /* coordinate conversion */
+  /* -----------------------------------------
+     Coordinate transform
+     ----------------------------------------- */
 
-  function xToPixel(xValue) {
+  function xToPixel(
+    xValue
+  ) {
 
-    return marginLeft
-      + (xValue / L) * plotWidth;
+    return (
+      marginLeft
+      +
+      (xValue / L)
+      * plotWidth
+    );
 
   }
 
-  function yToPixel(yValue) {
 
-    return marginTop
-      + (yMax - yValue)
-      / (yMax - yMin)
-      * plotHeight;
+  function yToPixel(
+    yValue
+  ) {
+
+    return (
+      marginTop
+
+      +
+
+      (
+        yMax - yValue
+      )
+
+      /
+      (
+        yMax - yMin
+      )
+
+      *
+      plotHeight
+    );
 
   }
 
 
-  /* =========================================
-     Background
-     ========================================= */
+  /* -----------------------------------------
+     Plot background
+     ----------------------------------------- */
 
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle =
+    "#ffffff";
 
   ctx.fillRect(
     marginLeft,
@@ -486,27 +831,30 @@ function drawWave() {
   );
 
 
-  /* =========================================
-     Grid
-     ========================================= */
+  /* -----------------------------------------
+     Vertical grid
+     ----------------------------------------- */
 
-  ctx.strokeStyle = "#e5e5e5";
+  ctx.strokeStyle =
+    "#e6e6e6";
+
   ctx.lineWidth = 1;
 
 
-  /*
-     x-grid
+  for (
+    let j = 0;
+    j <= 10;
+    j++
+  ) {
 
-     0.0 ~ 1.0
-     interval = 0.1
-  */
-
-  for (let j = 0; j <= 10; j++) {
-
-    const xValue = j / 10;
+    const xValue =
+      j / 10;
 
     const px =
-      xToPixel(xValue);
+      xToPixel(
+        xValue
+      );
+
 
     ctx.beginPath();
 
@@ -517,7 +865,8 @@ function drawWave() {
 
     ctx.lineTo(
       px,
-      marginTop + plotHeight
+      marginTop
+      + plotHeight
     );
 
     ctx.stroke();
@@ -525,20 +874,29 @@ function drawWave() {
   }
 
 
-  /*
-     y-grid
+  /* -----------------------------------------
+     Horizontal grid
+     ----------------------------------------- */
 
-     -1.0 ~ 1.0
-     interval = 0.5
-  */
+  const yTicks = [
+    -1.0,
+    -0.5,
+    0,
+    0.5,
+    1.0
+  ];
 
-  const yTicks =
-    [-1.0, -0.5, 0, 0.5, 1.0];
 
-  for (const yValue of yTicks) {
+  for (
+    const yValue
+    of yTicks
+  ) {
 
     const py =
-      yToPixel(yValue);
+      yToPixel(
+        yValue
+      );
+
 
     ctx.beginPath();
 
@@ -548,7 +906,8 @@ function drawWave() {
     );
 
     ctx.lineTo(
-      marginLeft + plotWidth,
+      marginLeft
+      + plotWidth,
       py
     );
 
@@ -557,21 +916,36 @@ function drawWave() {
   }
 
 
-  /* =========================================
-     Axes
-     ========================================= */
+  /* -----------------------------------------
+     Plot border
+     ----------------------------------------- */
 
-  ctx.strokeStyle = "#333333";
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle =
+    "#777";
+
+  ctx.lineWidth = 1;
+
+  ctx.strokeRect(
+    marginLeft,
+    marginTop,
+    plotWidth,
+    plotHeight
+  );
 
 
-  /*
-     x-axis : u = 0
-  */
+  /* -----------------------------------------
+     x axis, u = 0
+     ----------------------------------------- */
 
   const zeroY =
     yToPixel(0);
 
+
+  ctx.strokeStyle =
+    "#555";
+
+  ctx.lineWidth = 1.4;
+
   ctx.beginPath();
 
   ctx.moveTo(
@@ -580,124 +954,139 @@ function drawWave() {
   );
 
   ctx.lineTo(
-    marginLeft + plotWidth,
+    marginLeft
+    + plotWidth,
     zeroY
   );
 
   ctx.stroke();
 
 
-  /*
-     y-axis : x = 0
-  */
-
-  ctx.beginPath();
-
-  ctx.moveTo(
-    marginLeft,
-    marginTop
-  );
-
-  ctx.lineTo(
-    marginLeft,
-    marginTop + plotHeight
-  );
-
-  ctx.stroke();
-
-
-  /* =========================================
-     Tick labels
-     ========================================= */
-
-  ctx.fillStyle = "#333333";
-
-  ctx.font = "13px Arial";
-
-
-  /*
+  /* -----------------------------------------
      x tick labels
-  */
+     ----------------------------------------- */
 
-  ctx.textAlign = "center";
-  ctx.textBaseline = "top";
+  ctx.fillStyle =
+    "#333";
 
-  for (let j = 0; j <= 10; j++) {
+  ctx.font =
+    "13px Arial";
 
-    const xValue = j / 10;
+  ctx.textAlign =
+    "center";
+
+  ctx.textBaseline =
+    "top";
+
+
+  for (
+    let j = 0;
+    j <= 10;
+    j++
+  ) {
+
+    const xValue =
+      j / 10;
 
     const px =
-      xToPixel(xValue);
+      xToPixel(
+        xValue
+      );
+
 
     ctx.fillText(
       xValue.toFixed(1),
       px,
-      marginTop + plotHeight + 8
+      marginTop
+      + plotHeight
+      + 8
     );
 
   }
 
 
-  /*
+  /* -----------------------------------------
      y tick labels
-  */
+     ----------------------------------------- */
 
-  ctx.textAlign = "right";
-  ctx.textBaseline = "middle";
+  ctx.textAlign =
+    "right";
 
-  for (const yValue of yTicks) {
+  ctx.textBaseline =
+    "middle";
+
+
+  for (
+    const yValue
+    of yTicks
+  ) {
 
     const py =
-      yToPixel(yValue);
+      yToPixel(
+        yValue
+      );
+
 
     ctx.fillText(
       yValue.toFixed(1),
-      marginLeft - 8,
+      marginLeft - 9,
       py
     );
 
   }
 
 
-  /* =========================================
+  /* -----------------------------------------
      Axis titles
-     ========================================= */
+     ----------------------------------------- */
 
-  ctx.fillStyle = "#111111";
+  ctx.fillStyle =
+    "#111";
 
-  ctx.font = "15px Arial";
+  ctx.font =
+    "15px Arial";
 
 
   /*
-     x label
+    x
   */
 
-  ctx.textAlign = "center";
-  ctx.textBaseline = "bottom";
+  ctx.textAlign =
+    "center";
+
+  ctx.textBaseline =
+    "bottom";
+
 
   ctx.fillText(
     "x",
-    marginLeft + plotWidth / 2,
-    height - 2
+    marginLeft
+    + plotWidth / 2,
+    height - 5
   );
 
 
   /*
-     u(x,t) label
+    u(x,t)
   */
 
   ctx.save();
 
   ctx.translate(
-    15,
-    marginTop + plotHeight / 2
+    18,
+    marginTop
+    + plotHeight / 2
   );
 
   ctx.rotate(
     -Math.PI / 2
   );
 
-  ctx.textAlign = "center";
+  ctx.textAlign =
+    "center";
+
+  ctx.textBaseline =
+    "middle";
 
   ctx.fillText(
     "u(x,t)",
@@ -708,49 +1097,71 @@ function drawWave() {
   ctx.restore();
 
 
-  /* =========================================
-     Draw Wave
-     ========================================= */
+  /* -----------------------------------------
+     Wave
+     ----------------------------------------- */
 
-  ctx.strokeStyle = "#0066cc";
+  ctx.strokeStyle =
+    "#0066cc";
+
   ctx.lineWidth = 3;
 
   ctx.beginPath();
 
-  for (let i = 0; i <= N; i++) {
+
+  for (
+    let i = 0;
+    i <= N;
+    i++
+  ) {
 
     const px =
-      xToPixel(x[i]);
+      xToPixel(
+        x[i]
+      );
 
     const py =
-      yToPixel(uCurr[i]);
+      yToPixel(
+        uCurr[i]
+      );
 
-    if (i === 0) {
 
-      ctx.moveTo(px, py);
+    if (
+      i === 0
+    ) {
+
+      ctx.moveTo(
+        px,
+        py
+      );
 
     }
 
     else {
 
-      ctx.lineTo(px, py);
+      ctx.lineTo(
+        px,
+        py
+      );
 
     }
 
   }
 
+
   ctx.stroke();
 
 
-  /* =========================================
-     Boundary points
-     ========================================= */
+  /* -----------------------------------------
+     Fixed boundary points
+     ----------------------------------------- */
 
-  ctx.fillStyle = "#cc0000";
+  ctx.fillStyle =
+    "#d00000";
 
 
   /*
-     x = 0
+    x = 0
   */
 
   ctx.beginPath();
@@ -767,7 +1178,7 @@ function drawWave() {
 
 
   /*
-     x = L
+    x = L
   */
 
   ctx.beginPath();
@@ -785,93 +1196,18 @@ function drawWave() {
 }
 
 
-  /* coordinate axis */
-
-  ctx.strokeStyle = "#999";
-  ctx.lineWidth = 1;
-
-  ctx.beginPath();
-
-  ctx.moveTo(
-    0,
-    height / 2
-  );
-
-  ctx.lineTo(
-    width,
-    height / 2
-  );
-
-  ctx.stroke();
-
-
-  /* end points */
-
-  ctx.fillStyle = "black";
-
-  ctx.fillText(
-    "x = 0",
-    5,
-    height / 2 + 20
-  );
-
-  ctx.fillText(
-    "x = L",
-    width - 35,
-    height / 2 + 20
-  );
-
-
-  /* wave */
-
-  ctx.strokeStyle = "#0066cc";
-  ctx.lineWidth = 3;
-
-  ctx.beginPath();
-
-
-  const verticalScale = 140;
-
-  for (let i = 0; i <= N; i++) {
-
-    const px =
-      (x[i] / L) * width;
-
-    const py =
-      height / 2
-      - uCurr[i] * verticalScale;
-
-
-    if (i === 0) {
-
-      ctx.moveTo(px, py);
-
-    }
-
-    else {
-
-      ctx.lineTo(px, py);
-
-    }
-
-  }
-
-  ctx.stroke();
-
-}
-
-
 /* =========================================================
-   8. Animation
+   10. Animation
    ========================================================= */
 
 let running = false;
 
 
 /*
-   dt = 0.008 이고 화면은 약 60 FPS
+  한 화면 frame마다
+  numerical time step을 몇 번 진행할지
 
-   한 프레임마다 2 numerical steps 진행
+  너무 빠르면 1로 줄이면 된다.
 */
 
 const stepsPerFrame = 2;
@@ -879,10 +1215,20 @@ const stepsPerFrame = 2;
 
 function animate() {
 
-  if (!running) return;
+  if (
+    !running
+  ) {
+
+    return;
+
+  }
 
 
-  for (let s = 0; s < stepsPerFrame; s++) {
+  for (
+    let step = 0;
+    step < stepsPerFrame;
+    step++
+  ) {
 
     updateWave();
 
@@ -892,30 +1238,42 @@ function animate() {
   drawWave();
 
 
-  document.getElementById("timeDisplay")
-    .textContent = time.toFixed(3);
+  document
+    .getElementById(
+      "timeDisplay"
+    )
+    .textContent =
+      time.toFixed(3);
 
 
-  requestAnimationFrame(animate);
+  requestAnimationFrame(
+    animate
+  );
 
 }
 
 
 /* =========================================================
-   9. Buttons
+   11. Buttons
    ========================================================= */
 
 document
-  .getElementById("playButton")
+  .getElementById(
+    "playButton"
+  )
   .addEventListener(
     "click",
     function () {
 
-      if (!running) {
+      if (
+        !running
+      ) {
 
         running = true;
 
-        requestAnimationFrame(animate);
+        requestAnimationFrame(
+          animate
+        );
 
       }
 
@@ -924,7 +1282,9 @@ document
 
 
 document
-  .getElementById("pauseButton")
+  .getElementById(
+    "pauseButton"
+  )
   .addEventListener(
     "click",
     function () {
@@ -936,7 +1296,9 @@ document
 
 
 document
-  .getElementById("resetButton")
+  .getElementById(
+    "resetButton"
+  )
   .addEventListener(
     "click",
     function () {
@@ -949,8 +1311,14 @@ document
   );
 
 
+/* =========================================================
+   12. Initial condition selector
+   ========================================================= */
+
 document
-  .getElementById("initialCondition")
+  .getElementById(
+    "initialCondition"
+  )
   .addEventListener(
     "change",
     function () {
@@ -964,38 +1332,69 @@ document
 
 
 /* =========================================================
-   10. Parameter Display
+   13. Parameter display
    ========================================================= */
 
-document.getElementById("LDisplay")
-  .textContent = L;
-
-document.getElementById("NDisplay")
-  .textContent = N;
-
-document.getElementById("dxDisplay")
-  .textContent = dx.toFixed(4);
-
-document.getElementById("cDisplay")
-  .textContent = c;
-
-document.getElementById("dtDisplay")
-  .textContent = dt.toFixed(4);
-
-document.getElementById("cflDisplay")
+document
+  .getElementById(
+    "LDisplay"
+  )
   .textContent =
-  (c * dt / dx).toFixed(3)
-  + " ✓ Stable";
+    L.toFixed(2);
+
+
+document
+  .getElementById(
+    "NDisplay"
+  )
+  .textContent =
+    N;
+
+
+document
+  .getElementById(
+    "dxDisplay"
+  )
+  .textContent =
+    dx.toFixed(4);
+
+
+document
+  .getElementById(
+    "cDisplay"
+  )
+  .textContent =
+    c.toFixed(2);
+
+
+document
+  .getElementById(
+    "dtDisplay"
+  )
+  .textContent =
+    dt.toFixed(4);
+
+
+document
+  .getElementById(
+    "cflDisplay"
+  )
+  .textContent =
+    (
+      c * dt / dx
+    ).toFixed(3)
+    +
+    " ✓ Stable";
 
 
 /* =========================================================
-   Start
+   14. Start
    ========================================================= */
 
 initializeWave();
 
 </script>
 
-
 </body>
+
 </html>
