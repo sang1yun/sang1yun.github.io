@@ -423,12 +423,366 @@ function drawWave() {
   const width = canvas.width;
   const height = canvas.height;
 
-  ctx.clearRect(
-    0,
-    0,
-    width,
-    height
+  ctx.clearRect(0, 0, width, height);
+
+
+  /* =========================================
+     Plot settings
+     ========================================= */
+
+  const marginLeft = 55;
+  const marginRight = 25;
+  const marginTop = 25;
+  const marginBottom = 45;
+
+  const plotWidth =
+    width - marginLeft - marginRight;
+
+  const plotHeight =
+    height - marginTop - marginBottom;
+
+
+  /*
+     y-axis range
+
+     현재 initial conditions의 amplitude가
+     대략 ±1이므로 -1.2 ~ 1.2로 고정
+  */
+
+  const yMin = -1.2;
+  const yMax = 1.2;
+
+
+  /* coordinate conversion */
+
+  function xToPixel(xValue) {
+
+    return marginLeft
+      + (xValue / L) * plotWidth;
+
+  }
+
+  function yToPixel(yValue) {
+
+    return marginTop
+      + (yMax - yValue)
+      / (yMax - yMin)
+      * plotHeight;
+
+  }
+
+
+  /* =========================================
+     Background
+     ========================================= */
+
+  ctx.fillStyle = "#ffffff";
+
+  ctx.fillRect(
+    marginLeft,
+    marginTop,
+    plotWidth,
+    plotHeight
   );
+
+
+  /* =========================================
+     Grid
+     ========================================= */
+
+  ctx.strokeStyle = "#e5e5e5";
+  ctx.lineWidth = 1;
+
+
+  /*
+     x-grid
+
+     0.0 ~ 1.0
+     interval = 0.1
+  */
+
+  for (let j = 0; j <= 10; j++) {
+
+    const xValue = j / 10;
+
+    const px =
+      xToPixel(xValue);
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      px,
+      marginTop
+    );
+
+    ctx.lineTo(
+      px,
+      marginTop + plotHeight
+    );
+
+    ctx.stroke();
+
+  }
+
+
+  /*
+     y-grid
+
+     -1.0 ~ 1.0
+     interval = 0.5
+  */
+
+  const yTicks =
+    [-1.0, -0.5, 0, 0.5, 1.0];
+
+  for (const yValue of yTicks) {
+
+    const py =
+      yToPixel(yValue);
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      marginLeft,
+      py
+    );
+
+    ctx.lineTo(
+      marginLeft + plotWidth,
+      py
+    );
+
+    ctx.stroke();
+
+  }
+
+
+  /* =========================================
+     Axes
+     ========================================= */
+
+  ctx.strokeStyle = "#333333";
+  ctx.lineWidth = 1.5;
+
+
+  /*
+     x-axis : u = 0
+  */
+
+  const zeroY =
+    yToPixel(0);
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    marginLeft,
+    zeroY
+  );
+
+  ctx.lineTo(
+    marginLeft + plotWidth,
+    zeroY
+  );
+
+  ctx.stroke();
+
+
+  /*
+     y-axis : x = 0
+  */
+
+  ctx.beginPath();
+
+  ctx.moveTo(
+    marginLeft,
+    marginTop
+  );
+
+  ctx.lineTo(
+    marginLeft,
+    marginTop + plotHeight
+  );
+
+  ctx.stroke();
+
+
+  /* =========================================
+     Tick labels
+     ========================================= */
+
+  ctx.fillStyle = "#333333";
+
+  ctx.font = "13px Arial";
+
+
+  /*
+     x tick labels
+  */
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+
+  for (let j = 0; j <= 10; j++) {
+
+    const xValue = j / 10;
+
+    const px =
+      xToPixel(xValue);
+
+    ctx.fillText(
+      xValue.toFixed(1),
+      px,
+      marginTop + plotHeight + 8
+    );
+
+  }
+
+
+  /*
+     y tick labels
+  */
+
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+
+  for (const yValue of yTicks) {
+
+    const py =
+      yToPixel(yValue);
+
+    ctx.fillText(
+      yValue.toFixed(1),
+      marginLeft - 8,
+      py
+    );
+
+  }
+
+
+  /* =========================================
+     Axis titles
+     ========================================= */
+
+  ctx.fillStyle = "#111111";
+
+  ctx.font = "15px Arial";
+
+
+  /*
+     x label
+  */
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+
+  ctx.fillText(
+    "x",
+    marginLeft + plotWidth / 2,
+    height - 2
+  );
+
+
+  /*
+     u(x,t) label
+  */
+
+  ctx.save();
+
+  ctx.translate(
+    15,
+    marginTop + plotHeight / 2
+  );
+
+  ctx.rotate(
+    -Math.PI / 2
+  );
+
+  ctx.textAlign = "center";
+
+  ctx.fillText(
+    "u(x,t)",
+    0,
+    0
+  );
+
+  ctx.restore();
+
+
+  /* =========================================
+     Draw Wave
+     ========================================= */
+
+  ctx.strokeStyle = "#0066cc";
+  ctx.lineWidth = 3;
+
+  ctx.beginPath();
+
+  for (let i = 0; i <= N; i++) {
+
+    const px =
+      xToPixel(x[i]);
+
+    const py =
+      yToPixel(uCurr[i]);
+
+    if (i === 0) {
+
+      ctx.moveTo(px, py);
+
+    }
+
+    else {
+
+      ctx.lineTo(px, py);
+
+    }
+
+  }
+
+  ctx.stroke();
+
+
+  /* =========================================
+     Boundary points
+     ========================================= */
+
+  ctx.fillStyle = "#cc0000";
+
+
+  /*
+     x = 0
+  */
+
+  ctx.beginPath();
+
+  ctx.arc(
+    xToPixel(0),
+    yToPixel(0),
+    5,
+    0,
+    2 * Math.PI
+  );
+
+  ctx.fill();
+
+
+  /*
+     x = L
+  */
+
+  ctx.beginPath();
+
+  ctx.arc(
+    xToPixel(L),
+    yToPixel(0),
+    5,
+    0,
+    2 * Math.PI
+  );
+
+  ctx.fill();
+
+}
 
 
   /* coordinate axis */
